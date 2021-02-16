@@ -5,177 +5,241 @@ namespace hidden
 /-
 Every function in Lean must be total.
 That is, there has to be an answer for
-*all* values of the argument type. We
-will discuss the reason later in the
-course, but for now you can believe
-there's a good reason.
-
-This constraint presents a problem if
-we want to represent *partial* functions
-in constructive logic, i.e., functions
-that are not defined for all values of 
-its argument type(s).
+*all* values of the argument type.
 
 Examples: 
 
-    Total function from bool to bool
-    tt --> 1
+    Total function, f, from bool to nat
     ff --> 0
-
-    Partial function from bool to bool
     tt --> 1
+
+    Partial function, p, from bool to nat
     ff ---> 
-
-Indeed, Π means "for *every* value" of
-one type there is *some* corresponding
-value of another type. Check it out.
+    tt --> 1
 -/
 
-#check ℕ → ℕ 
-#check Π (n : nat), nat
-#check ∀ (n : nat), nat
+-- We can express f in Lean like this
+def f : bool → nat
+| ff := 0
+| tt := 1
 
-def id_nat'' : Π (n : nat), nat := 
-  λ n, n
-#check id_nat''
-
-def id_nat' : ∀ (n : nat), nat := 
-  λ n, n
-#check id_nat'
-
-def id_nat : nat → nat := 
-  λ n, n
+-- But if we try p the same way it's an error
+def p : bool → nat
+| tt := 1
 
 /-
-
-All three expresions express the
-type of *total* functions from ℕ
-to ℕ. The arrow notation is just 
-a nice, conventional, shorthand.
-
-You can think of the function type, 
-*Π (n : nat), nat,* as a proposition
-that asserts that, given *any* value 
-of type n, it's possible to construct
-and return a value of the return type,
-also nat in this case. That is, it 
-can be read as asserting that there
-is at some total function that takes
-*any* nat values as an argument and
-that given any such value constructs
-and returns a value of type nat. The 
-λ expressions are basically proofs 
-that this is true, in the sense that 
-type check as *values* of the Π type.
+While the totality of "functions" in Lean
+isn't obvious from the function type syntax
+(α → β), it becomes clear when you see what
+(α → β) really means.
 -/
 
+#check bool → ℕ           -- Function types
+#check Π (b : bool), nat  -- Are Pi types
+#check ∀ (n : bool), nat  -- ∀ means same thing
 
-/-
-Now suppose for example we want to 
+/- Function types in CL are Pi types
+
+A Pi type, (Π (a : α), β), is a 
+function type. As such, a value,
+f, of this type (aka a "function"
+in Lean) associates with *every* 
+value (a : α) a corresponding value, 
+(f a) : β. 
+
+A Π type is thus a kind of product
+type, in the sense that any value 
+("function") of this type implicitly
+specifies a set of pairs, (a, f a), 
+containing exactly such pair for 
+each and every value, (a : α). 
+
+You can also visualize a value of
+a Π type as attaching some value of
+type β to every value of type α, by
+means of a string, or "fiber." 
+  
+If you really get into this stuff, 
+you might even use "fibration" to 
+describe what a value of the type
+(Π (a : α), β) does with α.
+
+Finally, the especially curious
+student will ask, Why does a Π 
+type bind a name, here a, to the
+argument? What's wrong with just
+leaving it unnamed, as when using
+the notation, α → β? It's as if
+we'd written (a : α) → β. What's
+up with that?
+
+The answer is, it's useful when
+we want the *type* of the return
+value to depend on the value of 
+the argument, a! A Π type can
+express this idea. Consider an
+example:
+
+Π (n : ℕ), seq n
+
+This type represents the type 
+of function that takes a natural
+number n and returns a sequence
+of length n, *where the length
+of the sequence is part of its 
+type*.
+
+Welcome to the type theory of
+Lean in its full generality. We
+don't need "dependent types" at
+this point, but we will soon,
+so it's good idea to get a first
+glimpse at the idea here.
+
+For now, we need to get back
+to the option type and its use.
+-/
+
+/- Examples of partial functions
+
+Now suppose that we want to 
 represent a partial function, f, 
-from bool to nat, where (f b) is
-defined to be zero if b is ff and
-that is *undefined* otherwise.
+from bool to nat, in Lean, where 
+f is define as follows:
 
-You know lots of partial functions.
-Another one is square root where
-both the domain of definition and
-the co-domain are taken to be the
-real numbers, ℝ. Here the function
-is partial because the real-valued
-square root function is not defined
-for every value in the domain of
-definition. In particular, it's not
-defined for any of the negative 
-real numbers.
+b  | f b
+ff |  0
+tt |  _
+
+
+While f has *some* value for ff, 
+it has *none* for tt. In the lexicon
+of everyday mathematics that makes
+it a *partial* function.
+
+Here's another example: a partial
+function from nat → nat that's just
+like the identity function except
+it's defined only for even numbers.
+
+n  | f n 
+---| -----
+0  | 0
+1  | _
+2  | 2
+3  | _
+4  | 4
+5  | _
+&c | &c
+
+ 
+Yet another is the square root where
+the *domain of definition* and the 
+*co-domain* are the real numbers, ℝ. 
+
+Here the function is partial because 
+the real-valued square root function 
+is not defined for every value in the 
+domain of definition, which includes
+the negative reals, on which the real
+square root function is undefined. 
 
 Note that if we defined the domain
-of definition of a similar square
+of definition of a *similar* square
 root function to be the non-negative
-real numbers, ℝ⁺, that function is
-total, because it's defined on 
-every value of its domain. These
-two square root functions have
-exactly the same values on the 
-same *domains*, where a domain
-is the subset of a given domain
-of definition on which a given
-function is defined.
-
-EXERCISE: Come up with a function
-that takes and returns real numbers
-but that isn't defined at zero.
-
-A function is thus total iff it's
-defined for every value in its 
-domain of definition, and in this
-case its domain is equal to its
-domain of definition. A function
-is partial if the domain on which
-it's defined is a strict subset 
-of its domain of definition.
-
-How can we represent a partial
-function in Lean (or in another
-constructive logic proof assistant)
-when all functions must be total?
-
-Take our partial function from
-bool to nat as an example. We
-represent the domain of definition
-of the function as the type bool.
-We need to return some value for
-each value of this type: here, a
-value for tt and a value for ff, 
-but where the form of value we
-return indicates whether we got
-a return value for an argument
-on which the function is defined,
-or a kind of "no value" result
-for an argument on which it isn't.
-
-Conceptually our function will have
-to return *some natural number* for
-any argument where the function is
-defined (namely for the value, ff, 
-in our example), other it will have
-to return *none*. It will be as if
-we've added a single new value,
-none, to the natural numbers, to
-serve as an "error" return value.
-
-The trick is to define a new type,
-*option nat*, a value of which is
-either *none* or *some (n : nat)*,
-and then to represent our partial
-function, f, as a total function,
-f', from bool to *option nat*: one 
-that returns *none* when applied 
-to a value, b, on which f is not
-defined, and that otherwise returns
-*some n*, where n is the value of 
-(f b), where, again, b is a value 
-on which the partial function, f,
-that we're representing is defined.
-
-An option type is a simple "sum of 
-products" type, with two variants:
-two constructors. The first, *none*,
-represents the "not defined" return
-value. The second, some (b : β),
-is used to return b as the correct
-value of a function, f', applied, 
-to an (a : α) on which f is defined. 
+real numbers, then that function is
+total, because it's defined for every
+value of its domain of definition. 
 -/
 
 /-
-Here it is, as defined in Lean.
+So let's talk about functions in the
+usual mathematical (set theoretical as
+opposed to type theoretical) sense? 
+What are the essential characteristics
+of a function, and how can we understand
+totality and partiality in these terms?
 
-universe u 
+A function in set theory, f, is defined
+by a triple, (α, β, R), where 
 
-inductive option (α : Type u) : Type u
-| none : option
-| some (a : α) : option
+- α, a set, is the *domain of definition* of f 
+- β, a set, is the *co-domain* of f,  
+- R ⊆ α ⨯ β is a binary relation on α and β 
+
+By a binary relation on sets α and β we just
+mean a set of pairs (x, y) where x values 
+are in α and y values are in β.
+
+Example: our even identity function above
+is (ℕ, ℕ, {(0,0),(2,2),(4,4),etc.})
+
+The *domain* of f is the subset of values
+in the domain of definition on which f is
+defined. 
+
+The domain of definition of our even 
+identity function is the set of all 
+natural numbers, {0, 1, 2, 3, ...}, 
+but the *domain* of the funciton is
+just {0, 2, 4, etc.}, the even numbers. 
+
+dom f = { x ∈ α | ∃ y ∈ β, (x, y) ∈ R } 
+
+The *range* of f is the subset of all 
+values in the co-domain that are values 
+of (f x) for *some* element, x, in dom f.
+
+The codomain of our even identity function
+is the natural numbers but the range is
+just the set of even natural numbers.
+
+ran f = { y ∈ β | ∃ x ∈ α, (x, y ∈ R) }
+-/
+
+
+
+/-
+How can we represent mathematically
+partial functions in Lean (or other
+constructive logic proof assistant)
+when all "functions" must be total?
+
+Consider our partial function from
+bool to nat. First we represent 
+the domain of definition set, the
+booleans, as the inductive type, 
+bool. We will need to return *some* 
+value of some inductive type for
+each value (a : α): a value for tt
+and a value for ff. We *cannot* 
+specify *bool* as the return type,
+because then we'd be defining a
+total function. What we need is a
+new type that in a sense augments
+the bool type with on additional
+element that we can use to signal
+"undefined". That is the purpose
+of the polymorphic option type
+builder. It allows us to return
+either *some (b : β)* or *none*.
+We can then represent our partial
+function, f, from bool to nat, as 
+a total function, f', from bool to 
+*option nat*: one  tht returns 
+*none* when applied to a value, b, 
+on which f is not defined, and that 
+otherwise returns *some n*, where 
+n = (f b).
+-/
+
+/-
+See option.lean for its definition.
+It's defined there just as it is
+in the standard Lean libraries, so
+after these exercises you can use 
+it without having to define it for
+yourself.
 -/
 
 def pFun : bool → option ℕ 
@@ -185,12 +249,6 @@ def pFun : bool → option ℕ
 #reduce pFun tt
 #reduce pFun ff
 
-/-
-Here's another example: a partial
-function from nat → ℕ that's like
-the identity function but defined
-only on even numbers.
--/
 
 def evenId : ℕ → option ℕ :=
 λ n, 
@@ -204,6 +262,21 @@ def evenId : ℕ → option ℕ :=
 #reduce evenId 3
 #reduce evenId 4
 #reduce evenId 5
+
+/-
+In Lean, we represent the sets, α and β,
+as types, and a total function, f, as a
+value of type Π (a : α), β, i.e., (α → β). 
+
+This type means for every (a : α) there 
+is a corresponding value, (f a) : β.  We 
+cannot represent a *partial* function, 
+(α, β, R) using a Π type on α and β. Our
+workaround for now is to represent such
+a function instead as a function of type 
+Π (a: α), option β, i.e., (α → option β)
+as we've described.
+-/
 
 
 end hidden

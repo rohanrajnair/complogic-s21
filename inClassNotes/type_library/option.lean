@@ -5,7 +5,7 @@ namespace hidden
 universe u 
 
 inductive option (α : Type u) : Type u
-| none : option
+| none {} : option
 | some (a : α) : option
 
 end hidden
