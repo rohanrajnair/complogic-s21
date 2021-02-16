@@ -34,6 +34,11 @@ by a smaller ST expression (similarly).
 
 -- YOUR DATA TYPE DEFINITION HERE
 
+inductive ST : Type
+| empty
+| salmon (e : ST)
+| trout (e : ST)
+
 /-
 Now assume that the *meaning* of a 
 given ST expression, e, is a  pair,
@@ -62,6 +67,16 @@ be recursive.
 
 -- YOUR EVAL AND HELPER FUNCIONS HERE
 
+def fishEvalHelper : ST → prod nat nat → prod nat nat
+| ST.empty (prod.mk s t) := (prod.mk s t)
+| (ST.salmon e) (prod.mk s t) := fishEvalHelper e (prod.mk (nat.add s 1) t)
+| (ST.trout e) (prod.mk s t) := fishEvalHelper e (prod.mk s (nat.add t 1))
+
+def fishEval : ST → prod nat nat
+| ST.empty := fishEvalHelper ST.empty (0,0)
+| (ST.salmon s) := fishEvalHelper (ST.salmon s) (0, 0)
+| (ST.trout t) := fishEvalHelper (ST.trout t) (0, 0)
+
 /-
  WRITE SOME TEST CASES
 
@@ -71,6 +86,18 @@ be recursive.
     an expression with three salmon
     and two trout.
 -/
+
+def e0 : ST := ST.empty 
+#reduce fishEval e0 
+
+def e1 : ST := ST.salmon 
+                    (ST.salmon 
+                        (ST.salmon 
+                            (ST.trout 
+                                (ST.trout 
+                                    (ST.empty)))))
+
+#reduce fishEval e1
 
 /-
 2. [25 points] polymorphic functions 
@@ -89,6 +116,11 @@ with the name, id.
 -/
 
 -- YOUR ANSWER HERE
+
+universe u 
+def id' : Π {α : Type u}, α → α :=
+    λ α,
+        λ n, n
 
 
 /-
@@ -149,6 +181,14 @@ represent this partial function.
 
 -- YOUR ANSWER HERE
 
+inductive option (α : Type u) : Type u
+| none : option
+| some (a : α) : option
+
+def pId_bool : bool → option bool
+| tt := option.some tt
+| ff := option.none
+
 /-
 TEST YOUR FUNCTION
 Use #eval or #reduce to show that your
@@ -157,6 +197,9 @@ argument values.
 -/
 
 -- HERE
+
+#reduce pId_bool tt
+#reduce pId_bool ff
 
 
 /- 
@@ -181,6 +224,7 @@ structure box (α : Type u) : Type u :=
 (val : α)
 
 -- YOUR FUNCTION HERE
+
 
 -- WHEN YOU'VE GOT IT, THIS TEST SHOULD PASS
 
