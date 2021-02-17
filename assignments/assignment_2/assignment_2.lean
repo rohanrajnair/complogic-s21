@@ -225,6 +225,14 @@ structure box (α : Type u) : Type u :=
 
 -- YOUR FUNCTION HERE
 
+def liftF2Box : Π {α : Type u} {β : Type u}, (α → β) → (box α) → (box β) := 
+fun a,
+    fun b,
+        fun f,
+            fun n,
+                box.mk (f n.val)
+
+
 
 -- WHEN YOU'VE GOT IT, THIS TEST SHOULD PASS
 
