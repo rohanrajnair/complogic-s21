@@ -178,7 +178,7 @@ argument values.
 of type 
 
 Π (α β : Type u), 
-  (α → β) → box α → box α 
+  (α → β) → box α → box β  
   
 that takes a function, f, of type 
 (α → β), and a box, b, containing a 
