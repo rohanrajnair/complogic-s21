@@ -34,7 +34,6 @@ applying f to each element of l. Make f
 the first argument and l the second. The
 function will work by case analysis and
 recursion on l.
-
 -/
 
 -- ANSWER HERE
