@@ -339,8 +339,8 @@ def o1 : option ℕ := option.some 3
 def o2 : option (list ℕ) := option.some l1   
 
 #eval l1 
-#reduce map_option nat.succ option.none
-#reduce map_option list_add o2    
+#reduce map_option nat.succ option.none -- option.none 
+#reduce map_option list_add o2 -- some 6     
 
 
 /-
@@ -362,4 +362,4 @@ def default_nat : ℕ := 0
 
 def default_bool : bool := ff 
 
-def default_list : Π (α : Type u), list α := list.nil  
+-- def default_list : Π (α : Type u), list α := list.nil  
