@@ -1,4 +1,6 @@
 import .....inClassNotes.type_library.list
+import .....inClassNotes.type_library.box
+import .....inClassNotes.type_library.option
 
 /-
 HIGHER-ORDER FUNCTION WARMUP
@@ -106,7 +108,18 @@ should return [1,2,3,4,5].
 -/
 
 -- ANSWER HERE
+def filterZeros : list ℕ → list ℕ
+| list.nil := list.nil
+| (0::t) := filterZeros t
+| (h::t) := list.cons (h) (filterZeros t)
 
+def l4 : list ℕ := 1::2::0::3::4::0::0::5::(list.nil)
+def l5 : list ℕ := 0::list.nil 
+def l6 : list ℕ := list.nil 
+
+#eval filterZeros l4 -- [1,2,3,4,5]
+#eval filterZeros l5 -- []
+#eval filterZeros l6 -- []
 
 /-
 6. Write a function, isEqN, that
@@ -119,6 +132,17 @@ sure to test your function.
 
 -- ANSWER HERE
 
+def isEqn : ℕ → ℕ → bool 
+| 0 0 := tt 
+| 0 _ := ff
+| _ 0 := ff
+| (m+1) (n+1) := isEqn m n
+
+#eval isEqn 25 25 -- tt
+#eval isEqn 20 24 -- ff 
+#eval isEqn 0 14 -- ff 
+#eval isEqn 10 2 -- ff
+#eval isEqn 12 12 -- tt 
 
 /-
 7.
@@ -135,7 +159,17 @@ argument return true or false).
 
 -- ANSWER HERE
 
+def isEqn10 (n : ℕ) : bool := 
+isEqn n 10 
 
+def filterNs : list ℕ → (ℕ → bool) → list ℕ 
+| list.nil _ := list.nil
+| (h::t) f := if f h then filterNs t f else list.cons (h) (filterNs t f)
+
+def l7 : list ℕ := 10::20::10::30::40::(list.nil)
+
+#eval filterNs l2 isEqn10 -- [] 
+#eval filterNs l7 isEqn10 -- [20, 30, 40]
 
 /-
 8. Write a function, iterate, that 
@@ -155,6 +189,14 @@ nat.succ, your double function, and
 
 -- ANSWER HERE
 
+-- def iterate : Π(f : ℕ → ℕ) (n : ℕ), (ℕ → ℕ) 
+-- | f 0 := f
+-- | f (n+1) := iterate f (f n)
+
+
+-- def add3 : ℕ → ℕ := iterate nat.succ 1
+
+-- #reduce add3 3
 
 /-
 9. Write a function, list_add, that takes
@@ -163,6 +205,15 @@ sum of all the numbers in the list.
 -/
 
 -- ANSWER HERE
+
+def list_add : (list ℕ) → ℕ
+| list.nil := 0
+| (h::t) := h + list_add t
+
+#eval list_add l1 -- 6
+#eval list_add l2 -- 0
+#eval list_add l3 -- 2
+#eval list_add l4 -- 15
 
 
 /-
@@ -173,6 +224,17 @@ product of all the numbers in the list.
 
 -- ANSWER HERE
 
+def mul_list : list ℕ := 4::3::2::1::4::list.nil
+
+def list_mul : (list ℕ) → ℕ
+| list.nil := 0
+| (h::list.nil) := h
+| (h::t) := h * list_mul t
+
+#eval list_mul mul_list -- 96
+#eval list_mul l1 -- 6
+#eval list_mul l2 -- 0
+#eval list_mul l3 -- 2
 
 /-
 11. Write a function, list_has_zero, that
@@ -186,7 +248,15 @@ that both have and don't have zero values.
 
 -- ANSWER HERE
 
+def list_has_zero : (list ℕ) → bool
+| list.nil := ff
+| (h::t) := if (isEqn h 0) then tt else list_has_zero t
 
+def l0 : list ℕ := 1::3::23::0::4::(list.nil)
+
+#eval list_has_zero l0 -- tt
+#eval list_has_zero l1 -- ff
+#eval list_has_zero l2 -- ff
 
 /-
 12. Write a function, compose_nat_nat,
@@ -200,6 +270,14 @@ argument values.
 
 -- ANSWER HERE
 
+def compose_nat_nat : (ℕ → ℕ) → (ℕ → ℕ) → ℕ → ℕ := 
+λ f,
+  λ g,
+    λ n,
+      g (f n)
+
+#eval compose_nat_nat nat.succ double 4 -- 10 
+#eval compose_nat_nat double nat.succ 4 -- 9 
 
 /-
 13. Write a polymorphic map_box function
@@ -216,7 +294,23 @@ by the application of f.
 -/
 
 -- ANSWER HERE
+namespace hidden 
 
+universe u
+
+def map_box : Π{α β : Type u}, (α → β) → box α → box β :=
+  λ a, 
+    λ b,
+      λ f,
+        λ a, 
+          box.mk (f a.val)
+
+def aBox : box ℕ := box.mk(3)
+
+#reduce map_box double aBox -- {val := 6}
+#reduce map_box nat.succ aBox -- {val := 4} 
+
+end hidden 
 /-
 14. 
 Write a function, map_option, that
@@ -229,6 +323,25 @@ f.
 -/
 
 -- ANSWER HERE
+
+universe u 
+
+def map_option : Π {α β : Type u}, (α → β) → option α → option β := 
+λ α, 
+  λ β, 
+    λ f,
+      λ a,
+        match a with
+        | option.none := option.none 
+        | option.some v := option.some (f v)
+        end
+
+def o1 : option ℕ := option.some 3
+def o2 : option (list ℕ) := option.some l1   
+
+#eval l1 
+#reduce map_option nat.succ option.none
+#reduce map_option list_add o2    
 
 
 /-
@@ -246,4 +359,8 @@ universe variable for the list problem.
 
 -- ANSWER HERE
 
+def default_nat : ℕ := 0
 
+def default_bool : bool := ff 
+
+def default_list : Π (α : Type u), list α := list.nil  
