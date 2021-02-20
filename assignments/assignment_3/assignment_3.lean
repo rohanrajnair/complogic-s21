@@ -1,3 +1,5 @@
+import .....inClassNotes.type_library.list
+
 /-
 HIGHER-ORDER FUNCTION WARMUP
 -/
@@ -13,7 +15,12 @@ definition:
 
 
 -- ANSWER HERE
+def double : ℕ → ℕ
+| 0 := 0
+| (n' + 1) := double n' + 2
 
+#reduce double 10
+#reduce double 125
 
 /-
 2. Write a function, map_list_nat, that 
@@ -29,7 +36,17 @@ recursion on l.
 -/
 
 -- ANSWER HERE
- 
+
+/-
+inductive list (α : Type u) : Type u
+| nil {} : list
+| cons (h : α) (t : list) : lis
+-/
+
+def map_list_nat : list ℕ → (ℕ → ℕ) → list ℕ
+| list.nil f := list.nil
+| (h::t) f := list.cons (f h) (map_list_nat t f)
+
 
 /-
 3. Test your map_list_nat function by
@@ -39,8 +56,13 @@ value. Include [], [2], and [1,2,3] in
 your set of test inputs and use comments
 to document the expected return values.
 -/
+def l1 : list ℕ := 1::2::3::(list.nil)
+def l2 : list ℕ := list.nil 
+def l3 : list ℕ := list.cons (2) (list.nil)
 
-
+#eval map_list_nat l1 double -- [2, 4, 6]
+#eval map_list_nat l2 double -- []
+#eval map_list_nat l3 double -- [4]
 
 /-
 4. In Lean, repr is an "overloaded"
@@ -65,7 +87,13 @@ converted to a string using repr.
 -/
 
 -- ANSWER HERE
+def map_list_nat_string : list ℕ → list string
+| list.nil := list.nil
+| (h::t) := list.cons (repr h) (map_list_nat_string t)
 
+#eval map_list_nat_string l1 -- ["1", "2", "3"]
+#eval map_list_nat_string l2 -- []
+#eval map_list_nat_string l3 -- ["2"]
 
 /-
 5. Write a function, filterZeros,
