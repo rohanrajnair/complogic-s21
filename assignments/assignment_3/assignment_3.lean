@@ -362,4 +362,4 @@ def default_nat : ℕ := 0
 
 def default_bool : bool := ff 
 
--- def default_list : Π (α : Type u), list α := list.nil  
+def default_list {α: Type u} : list α := list.nil 
