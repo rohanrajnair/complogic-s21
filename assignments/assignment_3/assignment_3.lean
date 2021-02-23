@@ -188,14 +188,17 @@ nat.succ, your double function, and
 
 -- ANSWER HERE
 
--- def iterate : Π(f : ℕ → ℕ) (n : ℕ), (ℕ → ℕ) 
--- | f 0 := f
--- | f (n+1) := iterate f (f n)
 
+def iterate : (nat → nat) → nat → (nat → nat)
+| f 0 := λ (m : nat), m
+| f (n'+1) := λ (m : nat), f (iterate f n' m)
 
--- def add3 : ℕ → ℕ := iterate nat.succ 1
+def quadruple : ℕ → ℕ := iterate double 2
 
--- #reduce add3 3
+def add4 : ℕ → ℕ := iterate nat.succ 4
+
+#reduce quadruple 2 -- 8
+#reduce add4 3 -- 7
 
 /-
 9. Write a function, list_add, that takes
@@ -270,10 +273,9 @@ argument values.
 -- ANSWER HERE
 
 def compose_nat_nat : (ℕ → ℕ) → (ℕ → ℕ) → ℕ → ℕ := 
-λ f,
-  λ g,
-    λ n,
-      g (f n)
+λ f g,
+  λ n,
+    g (f n)
 
 #eval compose_nat_nat nat.succ double 4 -- 10 
 #eval compose_nat_nat double nat.succ 4 -- 9 
@@ -298,11 +300,10 @@ namespace hidden
 universe u
 
 def map_box : Π{α β : Type u}, (α → β) → box α → box β :=
-  λ a, 
-    λ b,
-      λ f,
-        λ a, 
-          box.mk (f a.val)
+  λ a b,
+    λ f,
+      λ a, 
+        box.mk (f a.val)
 
 def aBox : box ℕ := box.mk(3)
 
