@@ -23,11 +23,21 @@ type.
 -/
 
 -- for each (n : nat), a type, (tuple n)
-def tuple : Π (n : nat), Type
+def tuple : Π (n : nat), Type 
 | 0 := unit
 | (n' + 1) := nat × (tuple n')
 
-#check tuple    -- ℕ → Type (*important*)
+/-
+0   tuple 0 = unit
+1   tuple 1 = nat ⨯ unit
+2   tuple 2 = nat ⨯ (nat ⨯ unit)
+3   tuple 3 = nat ⨯ (nat ⨯ (nat ⨯ unit))
+4   tuple 4 = nat ⨯ (tuple 3)
+...
+n   tuple (n' + 1) = nat ⨯ (tuple n')
+-/
+
+#check tuple  -- ℕ → Type (*important*)
 
 
 
