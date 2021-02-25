@@ -6,6 +6,29 @@ is the type of tuples (of natural numbers) of
 length n. 
 -/
 
+
+-- nat ⨯ nat
+
+--  ℕ ℕ ℕ 
+-- (1,2,3)
+
+--  ℕ ⨯ (ℕ×ℕ) 
+-- (1,(2,3))
+
+-- (1, (2, (3, (4, 5))))
+
+/-
+Build a function that takes a natural number, n,
+and returns a TYPE: the type of tuples of length
+n.
+
+#check tuple
+
+nat → (nat ⨯ (nat ⨯ nat))
+
+tuple : Π (n : ℕ), _
+-/
+
 /-
 Reminder: prod is a type builder. Given
 types, α and β, prod α β (or α × β) is the
@@ -23,7 +46,7 @@ type.
 -/
 
 -- for each (n : nat), a type, (tuple n)
-def tuple : Π (n : nat), Type 
+def tuple : nat → Type
 | 0 := unit
 | (n' + 1) := nat × (tuple n')
 
@@ -39,7 +62,8 @@ n   tuple (n' + 1) = nat ⨯ (tuple n')
 
 #check tuple  -- ℕ → Type (*important*)
 
-
+#check nat
+#check (prod nat nat)
 
 /-
 For values of n from 0 to 3, we get the 
@@ -62,7 +86,12 @@ def t0 : tuple 0 := unit.star
 def t1' : tuple 1 := prod.mk 1 unit.star
 def t1 : tuple 1 := (1, unit.star)  -- notation
 def t2 : tuple 2 := (1, 2, unit.star)
-def t3 : tuple 3 := (1, 2, 4, unit.star)
+def t3 : tuple 3 := (1, (2, (4, (unit.star))))
+
+--  (1, 2, unit.star)
+--  (1, (2, (unit.star)))
+-- prod.mk 1 (prod.mk 2 unit.star)
+
 
 /-
 The length is typechecked! The error
@@ -70,7 +99,7 @@ messages are cryptic, but, hey.
 -/
 
 def t3' : tuple 3 := (1, 2, 3, 4, unit.star) -- no
-def t3'' : tuple 3 := (1, 2, unit.star) -- no
+def t3'' : tuple 3 := (1, 2, 4, unit.star) -- no
 
 /-
 We could define a nicer concrete syntax that 
@@ -112,7 +141,10 @@ def nil := tuple 0
 def cons : Π {n : ℕ}, nat → tuple n → tuple (n + 1) 
 | n a t := prod.mk a t
 
-def head : Π (n : nat), tuple  n → option nat
+-- {2} 7 (1, 2, star) -> (7, (1, 2, star))
+-- #reduce cons 7 ((1, (2, unit.star)) : tuple 2)
+
+def head : Π {n : nat}, tuple  n → option nat
 | 0 _ := none
 | (n' + 1) (prod.mk h t) := some h
 
@@ -148,6 +180,9 @@ of a function.
 def zerotuple : Π (n : nat), tuple n
 | 0 := ()
 | (n' + 1) := (0, zerotuple n')
+
+
+-- Π (n : nat), tuple n
 
 #reduce zerotuple 4
 
