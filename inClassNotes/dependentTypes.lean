@@ -160,6 +160,7 @@ def append :
 def t6 := append t3 t3
 #reduce t6
 
+-- Type check catches bounds errors
 def foo (t : tuple 3) : nat := 0
 #check foo t2   -- No: type of t2 is tuple 2, not tuple 3
 
@@ -185,10 +186,10 @@ def zerotuple : Π (n : nat), tuple n
 -- Π (n : nat), tuple n
 
 #reduce zerotuple 4
-
+#check zerotuple 4
 
 def nToNtuple (n : nat) : tuple n := zerotuple n
-
+#check nToNtuple
 
 def z0 := nToNtuple 0
 def z1 := nToNtuple 1
@@ -207,6 +208,13 @@ def z4 := nToNtuple 4
 #reduce z2
 #reduce z3
 #reduce z4
+
+-- General notation for dependently typed functions
+-- Π (a : A), B a 
+-- Π (n : ℕ), tuple n
+
+-- Π (a : A), B   -- special case where B doesn't depend on a 
+-- A → B 
 
 
 -- Ours is a dependently typed function
@@ -228,9 +236,11 @@ sigma.snd : Π {α : Type u} {β : α → Type v} (c : sigma β), β c.fstLean
 
 #check Σ (n : nat), tuple n   -- dependent pair type, ⟨ n, tuple n ⟩ 
 
-def s3 : Σ (n : nat), tuple n := ⟨ 3, (nToNtuple 3) ⟩ 
-def s5 : Σ (n : nat), tuple n := ⟨ 5, (nToNtuple 5) ⟩ 
+def s3 : Σ (n : nat), tuple n := sigma.mk 3 (1,2,3,unit.star) 
+def s5 : Σ (n : nat), tuple n := ⟨  5, (nToNtuple 5) ⟩ 
 def sx : Σ (n : nat), tuple n := ⟨ 5, (nToNtuple 4) ⟩ -- Cannot form, snd has wrong type
+
+#print sigma 
 
 #reduce sigma.fst s3
 #reduce sigma.snd s3
@@ -242,11 +252,9 @@ def sx : Σ (n : nat), tuple n := ⟨ 5, (nToNtuple 4) ⟩ -- Cannot form, snd h
 -- Identical types, varying in notation
 #check Σ (n : nat), tuple n 
 #check @sigma nat tuple
-#reduce sigma tuple
 
 #check sigma.mk 3 (nToNtuple 3)
 #check sigma.mk 4 (nToNtuple 4)
-
 #reduce sigma.mk 3 (nToNtuple 3)
 #reduce sigma.mk 4 (nToNtuple 4)
 
@@ -276,9 +284,13 @@ variable b : β a
 #reduce  (sigma.mk a b).2  -- b-/
 
 def evenNum : {n : nat // n%2 = 0} := ⟨ 2, rfl ⟩ 
+
+#reduce evenNum
+
 def oops : {n : nat // n%2 = 0} := ⟨ 3, rfl ⟩ 
 
 def evenId : {n : nat // n%2 = 0} → nat 
+
 | ⟨ val, proof_about_val ⟩ := val
 
 #eval evenId ⟨ 0, rfl ⟩ 
