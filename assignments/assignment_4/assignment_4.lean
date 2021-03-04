@@ -12,6 +12,25 @@ is to return true (tt) if and only there is some
 tt value in the list.
 -/
 
+def list_map {α β : Type} : (α → β) → (list α) → list β 
+| f list.nil := list.nil
+| f (h::t) := (f h)::(list_map f t) -- applying f to list, one element at a time
+
+def someSatisfiesHelper : list bool → bool
+| list.nil := ff -- identity 
+| (h::t) := if h = tt then tt else someSatisfiesHelper t -- OR'ing list of bools 
+
+def someSatisfies {α : Type} : (α → bool) → list α → bool :=
+λ p,
+  λ l, 
+    someSatisfiesHelper (list_map p l)
+
+
+def evenNum : ℕ → bool := λ n, if n % 2 = 0 then tt else ff  
+
+#reduce someSatisfies evenNum [1,2,3] -- tt
+#reduce someSatisfies evenNum [1,3,5] -- ff
+    
 /-
 2.  Write a polymorphic function, allSatisfy, 
 that takes a a predicate function, p, of type 
@@ -26,11 +45,28 @@ is to return true (tt) if and only every value
 in the list is tt. 
 -/
 
+def allSatisfyHelper : list bool → bool
+| list.nil := ff 
+| (h::list.nil) := h 
+| (h::t) := if h = ff then ff else allSatisfyHelper t  
+
+def allSatisfy {α : Type} : (α → bool) → list α → bool :=
+λ p,
+  λ l, 
+    allSatisfyHelper (list_map p l)
+
+def l3 : list ℕ := 1::list.nil 
+def l4 : list ℕ := 2::4::6::8::list.nil 
+
+#reduce allSatisfy evenNum [1,2,3] -- ff 
+#reduce allSatisfy evenNum [1] -- ff 
+#reduce allSatisfy evenNum [2,4,6,8] -- tt
+
 /-
 3. Write a function called simple_fold_list.
 It has a type parameter, α, and takes (1) a
 binary function, f, of type α → α → α, (2) a 
-single value, i, of type α, as a list, l, of
+single value, i, of type α, and a list, l, of
 type list α The purpose of simple_fold_list 
 is to "reduce" a list to a single value by
 (1) returning i for the empty list, otherwise
@@ -44,6 +80,13 @@ simple_fold_list nat.add 0 [1,2,3,4,5] = 15
 simple_fold_list nat.mul 1 [1,2,3,4,5] = 120
 -/
 
+def simple_fold_list {α : Type} : (α → α → α) → α → list α → α
+| f i list.nil := i 
+| f i (h::t) := f (h) (simple_fold_list f i t)  
+
+#reduce simple_fold_list nat.add 0 [1,2,3,4,5] -- 15
+#reduce simple_fold_list nat.mul 1 [1,2,3,4,5] -- 120 
+
 /-
 4. Write an application of simple_fold_list to
 reduce a list of strings to a single string in
@@ -56,10 +99,43 @@ For example, reduce ["Hello", " ", "Lean!"] to
 "Hello, Lean!"
 -/
 
+#eval simple_fold_list string.append "" ["Hello", ", ", "Lean!"] -- "Hello, Lean!"
+
 /-
 5. Re-implement here your helpder functions from
 questions 1 and 2 using simple_fold_list.
 -/
+
+def and' : bool → bool → bool
+| bool.tt bool.tt := bool.tt
+| _ _ := bool.ff
+
+def or' : bool → bool → bool
+| bool.ff bool.ff := bool.ff 
+| _ _ := bool.tt 
+
+def someSatisfiesHelper' (l :list bool) : bool :=
+simple_fold_list or' ff l
+
+def allSatisfyHelper' (l :list bool) : bool := 
+simple_fold_list and' tt l
+
+def someSatisfies' {α : Type} : (α → bool) → list α → bool :=
+λ p,
+  λ l, 
+    someSatisfiesHelper' (list_map p l)
+
+def allSatisfy' {α : Type} : (α → bool) → list α → bool :=
+λ p,
+  λ l, 
+    allSatisfyHelper' (list_map p l)
+
+#reduce someSatisfies' evenNum [1,2,3] -- tt
+#reduce someSatisfies' evenNum [1,3,5] -- ff
+
+#reduce allSatisfy' evenNum [1,2,3] -- ff 
+#reduce allSatisfy' evenNum [1] -- ff 
+#reduce allSatisfy' evenNum [2,4,6,8] -- tt
 
 /-
 6. This question asks you to understand how to
@@ -109,12 +185,12 @@ argument to ev_ind is impliict, and not that it
 can be inferred from the second argument.)
 -/
 
-def ev0 : ev 0 := _
-def ev2 : ev 2 := _
-def ev4 : ev 4 := _
-def ev6 : ev 6 := _
-def ev8 : ev 8 := _
-def ev10 : ev 10 := _
+def ev0 : ev 0 := ev_base 
+def ev2 : ev 2 := ev_ind ev0
+def ev4 : ev 4 := ev_ind ev2 
+def ev6 : ev 6 := ev_ind ev4
+def ev8 : ev 8 := ev_ind ev6
+def ev10 : ev 10 := ev_ind ev8 
 
 /-
 6B. You should have been able to give values for 
@@ -123,6 +199,7 @@ What single word can you use to indate that each
 of these types has at least one value?
 -/
 
+-- each of these types is inhabited 
 
 /-
 6C. Try to give values for each of the types in
@@ -133,9 +210,11 @@ each of these types, in relation to the fact that
 these types have no values.
 -/
 
-def ev1 : ev 1 := _
-def ev3 : ev 3 := _
-def ev5 : ev 5 := _
+def ev1 : ev 1 := _ 
+def ev3 : ev 3 := ev_ind ev1 
+def ev5 : ev 5 := ev_ind ev3
+
+-- We cannot provide a value of type ev1 because that is an uninhabited type 
 
 /-
 6D. Define an inductive family, odd n, indexed by
@@ -145,6 +224,17 @@ even numbers have no values. Then show that you
 can complete the preceding three definitions if you
 replace ev by odd.
 -/
+
+inductive odd : ℕ → Type
+| odd_base : odd 1
+| odd_ind  {n : nat} (o : odd n) : odd (n + 2)
+
+open odd
+
+def odd1 : odd 1 := odd_base  
+def odd3 : odd 3 := odd_ind odd1 
+def odd5 : odd 5 := odd_ind odd3
+
 
 /-
 7. As you know, the type, empty, is uninhabited.
@@ -166,15 +256,20 @@ write a short answer (in English) to the
 question at the beginning of this problem.
 -/
 
+-- If we can define a function of a type that returns a value of type empty, 
+-- then its input must also be a value of an uninhabited type. 
+-- We can think of this as a proof by contradiction
+
 def foo : ev 1 → empty :=
 λ (e : ev 1),
-  _
+  match e with end 
+    
 
-def bar : ev 3 → empty :=
-_
+def bar : ev 3 → empty
+| (ev_ind e) := foo e
 
-def baz : ev 5 → empty :=
-_
+def baz : ev 5 → empty
+| (ev_ind e) := bar e
 
 /- 8. Define evdp to be a sigma (dependent 
 pair) type, avalue of which has a natural
@@ -185,7 +280,17 @@ of this type, whose first elements are,
 respectively, 0, 2, and 4.
 -/
 
--- Your answers here
+-- def evdp' (n : nat) (nEv : ev n) : sigma ev := ⟨n, nEv⟩
+
+def evdp : Type := Σ (n : nat), ev n
+
+def evp0 : evdp := sigma.mk 0 ev_base 
+def evp2 : evdp := sigma.mk 2 (ev_ind ev_base)
+def evp4 : evdp := sigma.mk 4 (ev_ind (ev_ind ev_base))
+
+#reduce evp0 -- ⟨0, ev_base⟩ 
+#reduce evp2 -- ⟨2, ev_ind ev_base⟩ 
+#reduce evp4 -- ⟨4, ev_ind (ev_ind ev_base)⟩ 
 
 /- 9. Write a function, mkEvp, that takes 
 a argument, n, of type nat, implicitly, and 
@@ -196,4 +301,10 @@ in what sense does mkEvp have a dependent
 function type? 
 -/
 
--- Your answers here
+-- def mkEvp' {n : nat} (nEv : ev n) : sigma ev := evdp n nEv 
+
+
+def mkEvp {n : nat} (nEv : ev n) : evdp := sigma.mk n nEv 
+
+#reduce mkEvp ev_base -- ⟨0, ev_base⟩ 
+#reduce mkEvp (ev_ind (ev_ind ev_base)) -- ⟨4, ev_ind, ev_ind (ev_base)⟩  
