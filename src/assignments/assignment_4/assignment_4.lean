@@ -5,7 +5,7 @@ that takes a a predicate function, p, of type
 parameter), and and that returns true (tt) if 
 and only if there is some value, v, in the list, 
 for which (p v) is true (tt). Your implementation
-must use map_list to convert the given list of α 
+must use list_map to convert the given list of α 
 values to a list of bool values, which it must
 then pass to a helper function, the job of which
 is to return true (tt) if and only there is some
@@ -38,7 +38,7 @@ that takes a a predicate function, p, of type
 parameter), and and that returns true (tt) if 
 and only if for every value, v, in the list, 
 (p v) is true (tt). Your implementation must 
-use map_list to convert the given list of α 
+use list_map to convert the given list of α 
 values to a list of bool values, which it must
 then pass to a helper function, the job of which
 is to return true (tt) if and only every value
@@ -272,7 +272,7 @@ def baz : ev 5 → empty
 | (ev_ind e) := bar e
 
 /- 8. Define evdp to be a sigma (dependent 
-pair) type, avalue of which has a natural
+pair) type, a value of which has a natural
 number, n,  as its first component, and a 
 value of type, ev n, as its second. Then 
 define evp0, evp2, and evp4 to be values
@@ -280,6 +280,7 @@ of this type, whose first elements are,
 respectively, 0, 2, and 4.
 -/
 
+<<<<<<< HEAD:assignments/assignment_4/assignment_4.lean
 -- def evdp' (n : nat) (nEv : ev n) : sigma ev := ⟨n, nEv⟩
 
 def evdp : Type := Σ (n : nat), ev n
@@ -291,6 +292,13 @@ def evp4 : evdp := sigma.mk 4 (ev_ind (ev_ind ev_base))
 #reduce evp0 -- ⟨0, ev_base⟩ 
 #reduce evp2 -- ⟨2, ev_ind ev_base⟩ 
 #reduce evp4 -- ⟨4, ev_ind (ev_ind ev_base)⟩ 
+=======
+def evdp := Σ (n : nat), ev n
+
+def evp0 : evdp := ⟨ 2, _ ⟩ 
+
+-- Your answers here
+>>>>>>> upstream/master:src/assignments/assignment_4/assignment_4.lean
 
 /- 9. Write a function, mkEvp, that takes 
 a argument, n, of type nat, implicitly, and 
