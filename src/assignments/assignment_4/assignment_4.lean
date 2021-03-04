@@ -33,7 +33,7 @@ def evenNum : ℕ → bool := λ n, if n % 2 = 0 then tt else ff
     
 /-
 2.  Write a polymorphic function, allSatisfy, 
-that takes a a predicate function, p, of type 
+that takes a predicate function, p, of type 
 α → bool, and list of values of type α (a type
 parameter), and and that returns true (tt) if 
 and only if for every value, v, in the list, 
@@ -102,7 +102,7 @@ For example, reduce ["Hello", " ", "Lean!"] to
 #eval simple_fold_list string.append "" ["Hello", ", ", "Lean!"] -- "Hello, Lean!"
 
 /-
-5. Re-implement here your helpder functions from
+5. Re-implement here your helper functions from
 questions 1 and 2 using simple_fold_list.
 -/
 
@@ -225,6 +225,7 @@ can complete the preceding three definitions if you
 replace ev by odd.
 -/
 
+<<<<<<< HEAD
 inductive odd : ℕ → Type
 | odd_base : odd 1
 | odd_ind  {n : nat} (o : odd n) : odd (n + 2)
@@ -235,6 +236,9 @@ def odd1 : odd 1 := odd_base
 def odd3 : odd 3 := odd_ind odd1 
 def odd5 : odd 5 := odd_ind odd3
 
+=======
+inductive empty' : Type
+>>>>>>> upstream/master
 
 /-
 7. As you know, the type, empty, is uninhabited.
@@ -293,7 +297,7 @@ def evp4 : evdp := sigma.mk 4 (ev_ind (ev_ind ev_base))
 #reduce evp4 -- ⟨4, ev_ind (ev_ind ev_base)⟩ 
 
 /- 9. Write a function, mkEvp, that takes 
-a argument, n, of type nat, implicitly, and 
+a argument, mn, of type nat, iplicitly, and 
 an argument, nEv ot type, ev n, and that 
 returns a value of type evdp (from the last
 problem). Then briefly answer the question, 
