@@ -280,7 +280,6 @@ of this type, whose first elements are,
 respectively, 0, 2, and 4.
 -/
 
-<<<<<<< HEAD:assignments/assignment_4/assignment_4.lean
 -- def evdp' (n : nat) (nEv : ev n) : sigma ev := ⟨n, nEv⟩
 
 def evdp : Type := Σ (n : nat), ev n
@@ -292,13 +291,6 @@ def evp4 : evdp := sigma.mk 4 (ev_ind (ev_ind ev_base))
 #reduce evp0 -- ⟨0, ev_base⟩ 
 #reduce evp2 -- ⟨2, ev_ind ev_base⟩ 
 #reduce evp4 -- ⟨4, ev_ind (ev_ind ev_base)⟩ 
-=======
-def evdp := Σ (n : nat), ev n
-
-def evp0 : evdp := ⟨ 2, _ ⟩ 
-
--- Your answers here
->>>>>>> upstream/master:src/assignments/assignment_4/assignment_4.lean
 
 /- 9. Write a function, mkEvp, that takes 
 a argument, n, of type nat, implicitly, and 
