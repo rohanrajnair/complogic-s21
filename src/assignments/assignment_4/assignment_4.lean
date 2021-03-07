@@ -225,7 +225,6 @@ can complete the preceding three definitions if you
 replace ev by odd.
 -/
 
-<<<<<<< HEAD
 inductive odd : ℕ → Type
 | odd_base : odd 1
 | odd_ind  {n : nat} (o : odd n) : odd (n + 2)
@@ -236,9 +235,6 @@ def odd1 : odd 1 := odd_base
 def odd3 : odd 3 := odd_ind odd1 
 def odd5 : odd 5 := odd_ind odd3
 
-=======
-inductive empty' : Type
->>>>>>> upstream/master
 
 /-
 7. As you know, the type, empty, is uninhabited.
