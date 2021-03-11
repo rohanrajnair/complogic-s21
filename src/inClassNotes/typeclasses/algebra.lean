@@ -128,7 +128,17 @@ Q is thus a field. ℝ is a field in the same way. So is ℂ.
 So what good can all of this be? Here's one application.
 We've noted that arguments to foldr can be inconsistent. The
 wrong identity element can be passed for the given operator.
+-/
 
+
+def foldr {α : Type} : (α → α → α) → α → list α → α 
+| f id [] := id    
+| f id (h::t) := f h (foldr f id t)
+
+#eval foldr nat.mul 0 [1,2,3,4,5]   -- oops!
+
+
+/-
 A better foldr takes a "certified" monoid as an argument.
 A monoid bundles an operator with its identity element, so
 they can't get out of synch. By "certified,"" we mean that 
@@ -175,6 +185,10 @@ def add_foldr
 
 #eval mul_foldr [1,2,3,4,5]
 #eval add_foldr [1,2,3,4,5]   -- missing instance above
+
+
+
+
 
 
 end alg
