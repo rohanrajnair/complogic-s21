@@ -192,10 +192,10 @@ The group, D4.
 -/
 
 inductive dihedral_4 : Type
-| r0    -- 0 quarter turns    r: rotation
-| r1    -- 1 quarter turn
-| r2    -- 2 quarter turns
-| r3    -- 3 quarter turns
+| r0     -- 0 quarter turns    r: rotation
+| r1     -- 1 quarter turn
+| r2     -- 2 quarter turns
+| r3     -- 3 quarter turns
 | sr0    -- flip horizontal   s: reflection
 | sr1    -- flip ne/sw
 | sr2    -- flip vertical
