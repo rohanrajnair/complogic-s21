@@ -203,15 +203,5 @@ the equality predicate, on terms of any type. What
 are its properties and related functions?
 -/
 
-/- 
-Properties of equality
--- reflexive
--- symmetric
--- transitive
-An equivalence relation
--/
-
-#check eq.trans
-#check @eq.rec
 
 
