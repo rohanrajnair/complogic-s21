@@ -1,198 +1,13 @@
 import ...inClassNotes.typeclasses.functor
---import ...inClassNotes.typeclasses.algebra
+import ...inClassNotes.typeclasses.algebra
+import data.real.basic
+import data.int.basic
+import data.rat.basic 
 
-namespace alg
+open alg
 
 universe u
 
-/-
-Typeclasses extends hierarchy modeling algebraic hierarchy
--/
-
-@[class]
-structure has_zero (α : Type u) :=
-(zero : α)
-
-
-@[class]
-structure has_one (α : Type u) :=
-(one : α)
-
-
-/-
-A groupoid is a set with a binary operator. The only consraint 
-is that the set must be closed under the given binary operator.
-Note: there are other definitions of groupoid in mathematics. A
-groupoid is also sometimes called a magma. Here, the set is given
-by the type, α, and the operator by the field, *mul*.
--/
-@[class]  
-structure mul_groupoid (α : Type u) :=   
-(mul : α → α → α)                    
-
-@[class]  
-structure add_groupoid (α : Type u) :=  -- aka mul_groupoid or magma
-(add : α → α → α)                       -- mul must be total (closed)
-
-/-
-A semigroup is a groupoid in which the operator is *associative*
--/
-@[class]
-structure mul_semigroup (α : Type u) extends mul_groupoid α :=
-(mul_assoc : ∀ (a b c : α), mul a (mul b c) = mul (mul a b) c)
-
-@[class]
-structure add_semigroup (α : Type u) extends add_groupoid α :=
-(assoc : ∀ (a b c_1 : α), add a (add b c_1) = add (add a b) c_1)
-
-/-
-A monoid is a semigroup with an identity element
--/
-@[class]
-structure mul_monoid (α : Type u) extends mul_semigroup α, has_one α :=
-(mul_ident_left : ∀ (a : α), mul one a = a)
-(mul_ident_right: ∀ (a: α), mul a one = a)
-
-@[class]
-structure add_monoid (α : Type u) extends add_semigroup α, has_zero α :=
-(ident_left : ∀ (a : α), add zero a = a)
-(ident_right: ∀ (a: α), add a zero = a)
-
-/-
-A group is a mul_monoid in which every element has an inverse
--/
-@[class]
-structure mul_group (α : Type u) extends mul_monoid α :=
-(mul_left_inv : ∀ (a : α), ∃ (i : α), mul i a = one )
-(mul_right_inv : ∀ (a : α), ∃ (i : α), mul a i = one )
-
-@[class]
-structure add_group (α : Type u) extends add_monoid α :=
-(left_ident : ∀ (a : α), ∃ (i : α), add i a = zero )
-(right_ident : ∀ (a : α), ∃ (i : α), add a i = zero )
-
-/-
-A group is commutative, or abelian, if its operator is commutative.
--/
-@[class]
-structure mul_comm_group (α : Type u) extends mul_group α :=
-(mul_comm : ∀ (a b : α), mul a b = mul b a )
-
-@[class]
-structure add_comm_group (α : Type u) extends add_group α :=
-(comm : ∀ (a b : α), add a b = add b a )
-
-/-
-You can keep going to define a whole hierarchy of algebraic
-abstractions, and indeed all of these constructs and many more
-are already defined in Leans math library.
-
--- Ring
--- Field
--- Module
--- Vector space
--- etc.
--/
-
-
-/-
-Typeclass instances for nat. Note that we are "stubbing out"
-proofs that our objects actually follow the rules. We will 
-come back to fill in proofs once we know how to do that. It
-will be soon.
--/
-instance has_one_nat : has_one nat := ⟨ 1 ⟩ 
-instance mul_groupoid_nat : mul_groupoid nat := ⟨ nat.mul ⟩ 
-instance mul_semigroup_nat : mul_semigroup nat := ⟨ _ ⟩ 
-instance mul_monoid_nat : mul_monoid nat := ⟨ _ , _ ⟩ 
-
-instance has_zero_nat : has_zero nat := ⟨ 0 ⟩ 
-instance add_groupoid_nat : add_groupoid nat := ⟨ nat.add ⟩ 
-instance add_semigroup_nat : add_semigroup nat := ⟨ _ ⟩ 
-instance add_monoid_nat : add_monoid nat := ⟨ _ , _ ⟩ 
-
--- instance mul_group_nat : mul_group nat := ⟨ _, _ ⟩ 
-
-/-
-ℕ isn't a group under either add or mul! No inverses. 
-ℤ is an additive group but not a multiplicative group.
-ℚ is an additive group; ℚ-{0} is a multiplicative group.
-ℚ is thus a field. ℝ is a field in the same way. So is ℂ.
--/ 
-
-
-
-/-
-So what good can all of this be? Here's one application.
-We've noted that arguments to foldr can be inconsistent. The
-wrong identity element can be passed for the given operator.
--/
-
-
-def foldr {α : Type} : (α → α → α) → α → list α → α 
-| f id [] := id    
-| f id (h::t) := f h (foldr f id t)
-
-#eval foldr nat.mul 0 [1,2,3,4,5]   -- oops!
-
-
-/-
-A better foldr takes a "certified" monoid as an argument.
-A monoid bundles an operator with its identity element, so
-they can't get out of synch. By "certified,"" we mean that 
-an object comes with a rock solid proof of correctness. In
-this case, we'd really want to fill a proof that a putative
-monoid instance has an identity element that is proven to
-be a left and a right identity for the given operator. We
-don't know quite yet how to give these proofs, but that's
-the idea.  
-
-Here are implementations of foldr taking multiplicative and
-additive monoids as arguments. Note that the code is written
-to depend only on the definitions of the relevant typeclasses.
-You can thus use this fold to reduce lists of values of any 
-type as long as that type provides an implementation of the 
-monoid typeclass.  
-
-NB: typeclass instances should almost always be anonymous. 
-For exaple, write [mul_monoid α] instead of [m : mul_monoid α]. 
-Lean does NOT support dot notation for typeclass instances.
-Look carefully below: Lean infers an instance of mul_monoid.
-That instance in turn extends has_one and mul_semigroup. The
-latter extends mul_groupoid (formerly, and in Lean, has_mul).
-To get at the mul function of the monoid that we need here,
-we refer to it through the typeclass, up the inheritance
-hierarchy, that defines it directly: here, mul_groupoid.
--/
-def mul_monoid_foldr 
-  {α : Type u} 
-  [mul_monoid α] 
-  :
-  list α → α 
-| [] := has_one.one
-| (h::t) := mul_groupoid.mul h (mul_monoid_foldr t)  
-
--- Additive version of the same foldr function.
-def add_monoid_foldr 
-  {α : Type u} 
-  [add_monoid α] 
-  :
-  list α → α 
-| [] := has_zero.zero
-| (h::t) := add_groupoid.add h (add_monoid_foldr t)  
-
-#eval mul_monoid_foldr [1,2,3,4,5]
-#eval add_monoid_foldr [1,2,3,4,5]   -- missing instance above
-
-
-
-/-
-Copy this file to where you want to work on 
-it and then adjust the imports accordingly.
-Work through the file following directions
-as indicated. Turn in your completed file on
-Collab.
--/
 
 /-
 1. We've imported our definitions from our
@@ -211,14 +26,57 @@ the required proofs with *sorry*.
 -- 3. Distributive Law applies
 -- Using Wikipedia definition: (https://en.wikipedia.org/wiki/Ring_(mathematics))
 
---open alg
 
---set_option old_structure_cmd true 
+set_option old_structure_cmd true 
 
 
 @[class]
-structure ring (α : Type u) extends add_comm_group α, mul_monoid α :=
-(dist : ∀ (a b c : α), mul a (add b c) = add (mul a b) (mul a c))
+structure has_ring (α : Type u) extends alg.add_comm_group α, mul_monoid α :=
+(dist_left : ∀ (a b c : α), mul_groupoid.mul a (add_groupoid.add b c) = add_groupoid.add (mul_groupoid.mul a b) (mul_groupoid.mul a c))
+(dist_right : ∀ (a b c : α), mul_groupoid.mul (add_groupoid.add b c) a = add_groupoid.add (mul_groupoid.mul b a) (mul_groupoid.mul c a))
+
+
+instance has_zero_int : alg.has_zero ℤ := ⟨ 0 ⟩
+instance has_one_int : alg.has_one ℤ := ⟨ 1 ⟩
+instance mul_groupoid_int : alg.mul_groupoid ℤ := ⟨ int.mul ⟩ 
+instance add_groupoid_int : alg.add_groupoid ℤ := ⟨ int.add ⟩ 
+instance mul_semigroup_int : alg.mul_semigroup ℤ := ⟨ sorry ⟩
+instance add_semigroup_int : alg.add_semigroup ℤ := ⟨ sorry ⟩
+instance mul_monoid_int : alg.mul_monoid ℤ := ⟨ sorry, sorry ⟩
+instance add_monoid_int : alg.add_monoid ℤ := ⟨ sorry, sorry ⟩ 
+instance add_group_int : alg.add_group ℤ := ⟨ sorry, sorry ⟩ 
+instance mul_group_int : alg.mul_group ℤ := ⟨ sorry, sorry ⟩ 
+instance add_comm_group_int : alg.add_comm_group ℤ   := ⟨ sorry ⟩
+instance mul_comm_group_int : alg.mul_comm_group ℤ := ⟨ sorry ⟩
+
+instance has_ring_int : has_ring ℤ := ⟨ sorry, sorry, sorry, sorry, sorry ⟩
+
+instance has_zero_rat : alg.has_zero ℚ := ⟨ 0 ⟩
+instance has_one_rat : alg.has_one ℚ := ⟨ 1 ⟩
+instance mul_groupoid_rat : alg.mul_groupoid ℚ := ⟨ rat.mul ⟩ 
+instance add_groupoid_rat : alg.add_groupoid ℚ := ⟨ rat.add ⟩ 
+instance mul_semigroup_rat : alg.mul_semigroup ℚ := ⟨ sorry ⟩
+instance add_semigroup_tat : alg.add_semigroup ℚ := ⟨ sorry ⟩
+instance mul_monoid_rat : alg.mul_monoid ℚ := ⟨ sorry, sorry ⟩
+instance add_monoid_rat : alg.add_monoid ℚ := ⟨ sorry, sorry ⟩ 
+instance add_group_rat : alg.add_group ℚ := ⟨ sorry, sorry ⟩ 
+instance mul_group_rat : alg.mul_group ℚ := ⟨ sorry, sorry ⟩ 
+instance add_comm_group_rat : alg.add_comm_group ℚ   := ⟨ sorry ⟩
+instance mul_comm_group_rat : alg.mul_comm_group ℚ := ⟨ sorry ⟩
+
+instance has_zero_real : alg.has_zero ℝ := ⟨ 0 ⟩
+instance has_one_real : alg.has_one ℝ := ⟨ 1 ⟩
+instance mul_groupoid_real : alg.mul_groupoid ℝ := ⟨ sorry ⟩ 
+instance add_groupoid_real : alg.add_groupoid ℝ := ⟨ sorry ⟩ 
+instance mul_semigroup_real : alg.mul_semigroup ℝ := ⟨ sorry ⟩
+instance add_semigroup_real : alg.add_semigroup ℝ := ⟨ sorry ⟩
+instance mul_monoid_real : alg.mul_monoid ℝ := ⟨ sorry, sorry ⟩
+instance add_monoid_real : alg.add_monoid ℝ := ⟨ sorry, sorry ⟩ 
+instance add_group_real : alg.add_group ℝ := ⟨ sorry, sorry ⟩ 
+instance mul_group_real : alg.mul_group ℝ := ⟨ sorry, sorry ⟩ 
+instance add_comm_group_real : alg.add_comm_group ℝ   := ⟨ sorry ⟩
+instance mul_comm_group_real : alg.mul_comm_group ℝ := ⟨ sorry ⟩
+
 
 /-
 2. Go learn what an algebraic *field* is, then
@@ -237,11 +95,11 @@ your instances using sorry.
 -- Using Reed College's definition (http://people.reed.edu/~mayer/math112.html/html1/node16.html)
 
 @[class]
-structure field (α : Type u) extends ring α := 
-(mul_comm : ∀ (a b : α) (a ≠ zero), mul a b = mul b a )
+structure has_field (α : Type u) extends has_ring α, mul_monoid α := 
+(mul_comm : ∀ (a b : α), (a ≠ alg.has_zero.zero) → mul_groupoid.mul a b = mul_groupoid.mul b a )
 
-
-
+instance has_field_rat : has_field ℚ := ⟨ sorry, sorry, sorry, sorry, sorry, sorry ⟩
+instance has_field_real : has_field ℝ := ⟨ sorry, sorry, sorry, sorry, sorry, sorry ⟩   
 
 /-
 3. Graduate students required. Undergrads extra
@@ -254,10 +112,45 @@ lieu of a formal proof, present a *brief informal*
 that the integers really do form a module under
 the usual arithmetic operators.
 -/
--- module is a generlization of vector spaces 
+-- module is a generalization of vector spaces 
 -- scalars from ring instead of field (vector space) 
--- abelian group M of elements 
+-- abelian group M of "elements" (not vectors) 
+-- r*m is a scaled element
 -- distributive properties, associative property, identity
+-- Using definition from Socratica: https://www.youtube.com/watch?v=IvukAijXgLE&ab_channel=Socratica
+
+set_option old_structure_cmd true 
+
+-- LEFT MODULE
+-- module is a vector space where the scalars are a ring
+
+@[class]
+structure has_module (α β : Type u) extends has_ring α, alg.add_group β :=
+(add_comm : ∀ (a b : α), add_groupoid.add a b = add_groupoid.add b a ) -- rebuilding abelian group w/ different constructor name
+(mod_scale : α → β → β) -- r*m = scaling 
+(mod_dist_left : ∀ (r : α) (m1 m2 : β), mod_scale r (add_groupoid.add m1 m2) = add_groupoid.add (mod_scale r m1) (mod_scale r m2))
+(mod_dist_right : ∀ (r1 r2 : α) (m : β), mod_scale (add_groupoid.add r1 r2) m = add_groupoid.add (mod_scale r1 m) (mod_scale r2 m))
+(mod_assoc : ∀ (r1 r2 : α) (m : β), mod_scale (mul_groupoid.mul r1 r2) m = mod_scale r1 (mod_scale r2 m))
+(mod_id : ∀ (m : β), mod_scale alg.has_one.one m = m) 
+
+instance has_module_int : has_module ℤ ℤ := ⟨ sorry, sorry, sorry, sorry, sorry, sorry, sorry, sorry, sorry, sorry, sorry, sorry, sorry ⟩
+
+/-
+Informal Proof that the integers form a module: 
+
+We know that the integers form a ring since:
+1) Integers are Abelian under addition (commutative property holds for integers)
+2) Distributive property applies 
+
+Since the integers form a ring, we can safely choose the scalars of our module to be the set of Integers. 
+
+Since we already established that the integers are abelian under addition, the "elements" of our module
+can also come from the integers. The set of integers is both abelian and forms a ring, so the integers must 
+form a module. Scaling is nothing more than simple multiplication which we have defined in the multiplicativegroupoid formed by
+the integer, and distributive property, associativity, and identity all come from the fact that the integers form an abelian group.
+-/
+
+
 
 
 /-
@@ -280,6 +173,8 @@ need to do addition of something other than
 one, use your own add function. Similarly, if
 you need to multiply, using your mul function.
 -/
+
+-- multiplication = repeated addition, exponentiation = repeated multiplication 
 
 def add : nat → nat → nat
 | 0 m         := m
@@ -337,12 +232,10 @@ functions to implement your solution.
 -/
 
 
--- Your answer here
-
 def mul_map_reduce {α β : Type} [mul_monoid β] : (α → β) → (list α) → β :=
 λ (f : α → β),
   λ (l : list α),
-    mul_monoid_foldr (fmap f l) 
+    mul_monoid_foldr (fmap f l) -- mul identity and multiplication function are guaranteed by monoid
 
 
 /-
@@ -370,7 +263,7 @@ easier.
 
 inductive nat_eql: nat → nat → Type
 | zeros_equal : nat_eql 0 0
-| n_succ_m_succ_equal : Π {n m : nat}, nat_eql n m → nat_eql n.succ m.succ  
+| n_succ_m_succ_equal : Π {n m : nat}, nat_eql n m → nat_eql n.succ m.succ  -- require a previous nat_eql for this cons
 
 /-
 B. Now either complete the following programs
@@ -381,9 +274,9 @@ won't be possible.
 open nat_eql
 
 def eq_0_0 : nat_eql 0 0 := zeros_equal 
-def eq_0_1 : nat_eql 3 4 := _ 
-def eq_1_1 : nat_eql 1 1 := n_succ_m_succ_equal zeros_equal
---def eq_2_2 : nat_eql 2 2 := n_succ_m_succ_equal (n_succ_m_succ_equal zeros_equal)
+def eq_0_1 : nat_eql 3 4 := _ -- uninhabited type, no way to build this with our constructors
+def eq_1_1 : nat_eql 1 1 := n_succ_m_succ_equal zeros_equal -- can apply successor constructor to zeros_equal constructor
+--def eq_2_2 : nat_eql 2 2 := n_succ_m_succ_equal (n_succ_m_succ_equal zeros_equal) -- repeatedly applying successor constructor
 --def eq_3_3 : nat_eql 3 3 := n_succ_m_succ_equal eq_2_2 
 
 --#reduce eq_2_2 
@@ -408,7 +301,7 @@ until you're done. Voila!
 
 def eq_2_2 : nat_eql 2 2 :=
 begin
-apply (n_succ_m_succ_equal eq_1_1), 
+apply (n_succ_m_succ_equal eq_1_1), -- applying successor constructor once
 end
 
 /-
@@ -426,8 +319,8 @@ ok with us.
 def eq_500_500 : nat_eql 500 500 :=
 begin
   apply n_succ_m_succ_equal _, 
-repeat {apply n_succ_m_succ_equal _},
-  apply zeros_equal 
+repeat {apply n_succ_m_succ_equal _}, -- applying successor constructor 499 times
+  apply zeros_equal -- handling 'base case' 
 end
 
 
@@ -471,7 +364,7 @@ call it nat_to_bool_coe. When you're done the
 test cases below should work.
 -/
 
-def nat_to_bool : nat → bool :=
+def nat_to_bool : nat → bool := 
 λ n,
   match n with
   | 0 := ff 
@@ -512,4 +405,3 @@ aka, composed, automatically?
 -/
 
 --  Good job!
-end alg 
