@@ -1,3 +1,4 @@
+import .field_rename
 import ...inClassNotes.typeclasses.functor
 import ...inClassNotes.typeclasses.algebra
 import data.real.basic
@@ -405,3 +406,14 @@ aka, composed, automatically?
 -/
 
 --  Good job!
+
+example : 1 = 1 := 
+begin
+  exact (eq.refl 1),
+end
+
+example : 1 = 1 := 
+begin
+  apply eq.refl _,
+end
+
