@@ -2,7 +2,7 @@
 If P and Q are propositions, then so in P ∨ Q.
 We want to judge P ∨ Q to be true if at least
 one of them is true. In other words, to judge
-P ∧ Q to be true, we need either to be able to
+P ∨ Q to be true, we need either to be able to
 judge P to be true or Q to be true (and if both
 are true, that's fine, too).
 -/
@@ -16,21 +16,23 @@ inductive or (a b : Prop) : Prop
 -/
 
 /-
-It's a polymorphic either type (in Prop)!
+It's a polymorphic "either" type (in Prop)!
 -/
 
 
 axioms (P Q : Prop) (p : P)
 
-lemma porq' : P ∨ Q := _
+lemma porq' : P ∨ Q := or.inl p
 
 lemma porq'' : P ∨ Q := 
 begin
+apply or.inl _,
+exact p,
 end
 
-axiom (q : Q)
+axiom q : Q
 
-lemma porq''' : P ∨ Q := _
+lemma porq''' : P ∨ Q := or.inr q
 
 /-
 def or.intro_left {a : Prop} (b : Prop) (ha : a) : or a b :=
@@ -56,6 +58,12 @@ the grass is wet, to deduce that the grass is wet.
 
 axioms (R : Prop) (porq : P ∨ Q) (pr : P → R) (qr : Q → R)
 
-theorem RisTrue : R := _
+theorem RisTrue : R := or.elim porq pr qr
 
+theorem RisTrue' : R := 
+begin
+apply or.elim porq, 
+exact pr,
+exact qr,
+end
 
