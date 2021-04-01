@@ -67,3 +67,51 @@ exact pr,
 exact qr,
 end
 
+
+/- Or -/
+
+/-
+inductive or (a b : Prop) : Prop
+| inl (h : a) : or
+| inr (h : b) : or
+-/
+
+-- commutes forward, proof term
+example : P ∨ Q → Q ∨ P :=
+λ h, 
+  (match h with 
+  | or.inl p := or.inr p
+  | or.inr q := or.inl q
+  end)
+
+-- commutes forward, tactic script
+example : P ∨ Q → Q ∨ P :=
+begin
+  assume porq,
+  cases porq with p q,
+  exact or.inr p,
+  exact or.inl q,
+end
+
+/-
+or is associative, full proof
+-/
+example : P ∨ (Q ∨ R) ↔ (P ∨ Q) ∨ R := 
+begin
+  apply iff.intro _ _,
+  
+  -- Forwards ->
+  assume pqr,
+  cases pqr with p qr,
+  apply or.inl _,
+  exact or.inl p,
+  cases qr with q r,
+  apply or.inl,
+  exact or.inr q,
+  exact or.inr r,
+
+  -- Backwards <-
+  assume pqr, 
+  cases pqr,
+  _
+end

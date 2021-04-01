@@ -51,3 +51,46 @@ and.intro rfl rfl
 
 #reduce zzoo.right
 
+/-
+Proof that and commutes and is
+associative (you can regroup at
+will, by associativity). 
+-/
+
+example : P ∧ Q → Q ∧ P :=
+λ (h : P ∧ Q), and.intro h.right h.left
+
+/-
+And is commutative and associative. 
+Prove it.
+-/
+axiom R : Prop
+
+lemma and_assoc_forward : (P ∧ Q) ∧ R -> P ∧ (Q ∧ R) :=
+λ h, 
+  (and.intro 
+    h.left.left 
+   (and.intro h.left.right h.right)
+  )
+
+/-
+Full proof. and commutes
+-/
+example : P ∧ Q ↔ Q ∧ P :=
+
+-- proof is pair: forward/backward proofs
+iff.intro 
+  -- proof forward
+  (λ h, ⟨ h.right, h.left ⟩ )
+  -- proof backwards
+  (λ h, ⟨ h.right, h.left ⟩)
+
+/-
+Full proof, modulo reverse direction,
+that and is associative.
+-/
+example : (P ∧ Q) ∧ R ↔ P ∧ (Q ∧ R) :=
+iff.intro 
+  (and_assoc_forward)
+  (_)
+  
