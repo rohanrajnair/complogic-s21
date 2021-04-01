@@ -74,10 +74,16 @@ begin
   cases h,
 end 
 
+/-
+Contradictions are impossible.
+-/
 lemma no_contra : ¬ (P ∧ ¬ P) :=
 λ h, 
   (h.right h.left)
 
+/-
+Nonsense implies nonsense.
+-/
 example : 1 = 0 → 2 = 3 := 
 begin
   assume h,
