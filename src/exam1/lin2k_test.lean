@@ -1,6 +1,9 @@
 import data.real.basic
 import .lin2k
 
+namespace lin2k 
+
+universe u 
 
 -- Let's work with rational number field
 abbreviation K := ℚ  
@@ -18,6 +21,10 @@ vectr with values (4,6), (-6,2), and
 -/
 
 -- HERE
+
+def v1 : vectr := ⟨ 4, 6⟩
+def v2 : vectr := ⟨ -6, 2 ⟩
+def v3 : vectr := ⟨ 3, -7 ⟩   
 
 /-
 1B. [10 points]
@@ -37,6 +44,11 @@ v2 + (-1:K) • v1.)
 
 -- HERE 
 
+def v4 : vectr := 2 • v1 + (-1:scalr) • v2 + v3 
+
+
+
+
 /-
 Compute the correct answer by hand
 here, showing your work, and check
@@ -45,7 +57,23 @@ answer.
 
 -- HERE
 
+v1 = (4, 6)
+v2 = (-6, 2)
+v3 = (3, -7)
+
+v4 = 2 • v1 + (-1) • v2 + v3 
+
+2 • v1 = (2(4), 2(6)) = (8, 12)
+(-1) • v2 = (6, -2)
+
+v4 = (8, 12) + (6, -2) + (3, -7) 
+   = (17, 3)
+
 -/
+
+#eval v4 -- (17, 3)
+
+
 
 /-
 1C. [10 points]
@@ -115,6 +143,32 @@ table, write the multiplicative inverses.
 -- HERE
 
 /-
+
+x + b ≡ 0 (mod 5) 
+
+Table 1: 
+
+x ∈ ℤ5    b 
+0         0                
+1         4
+2         3
+3         2
+4         1
+
+x ⬝ (1/x) ≡ 1 (mod 5)
+
+Table 2: 
+
+x ∈ ℤ5   1/x        
+1         1
+2         3
+3         2
+4         4
+
+-/
+
+
+/-
 4. [15 points]
 Is the integers mod 4 a field? If so,
 prove it informally by writing tables
@@ -126,6 +180,46 @@ inverse, and briefly explain why.
 -/
 
 -- HERE
+
+/- 
+x + b ≡ 0 (mod 4) 
+
+Table 1: 
+
+x ∈ ℤ4    b 
+0         0               
+1         3  
+2         2
+3         1
+
+x ⬝ (1/x) ≡ 1 (mod 4)
+
+Table 2: 
+
+x ∈ ℤ4   1/x
+1         1 
+2         ??
+3         3 
+
+
+The integers mod 4 (ℤ4) is not a field because 
+2 does not have a multiplicative inverse mod 4. We can show this more formally 
+via a proof by contradiction by assuming 2 times some x is congruent to 1 mod 4: 
+
+2x ≡ 1 (mod 4)
+
+This means that 4 must divide 2x - 1 
+(In other words, 2x - 1 is a multiple of 4):
+
+4 | 2x - 1
+
+So, 2x - 1 must also be a multiple of 2: 
+
+2 | 2x - 1
+
+This is not possible; 2 cannot divide 2x - 1 because 2 is even. 
+
+-/
 
 /-
 5. [20 points]
@@ -152,6 +246,15 @@ expected/correct result.
 -/
 
 -- HERE
+
+def sum_vectrs {α : Type u} [add_monoid α] : list α → α 
+| [] := has_zero.zero 
+| (h::t) := h + sum_vectrs t
+
+def vec_list : list vectr := [v1, v2, v3, v4]
+
+#eval v1 + v2 + v3 + v4           -- (18, 4)
+#eval sum_vectrs [v1, v2, v3, v4] -- (18, 4)
 
 /-
 6. Required for graduate students,
@@ -201,13 +304,138 @@ can right away right click on "field" and
 to do. Solving this problem will require
 some digging through Lean library code.
 -/
-axioms 
-  (Z5 : Type) 
-  (z5add : Z5 → Z5 → Z5)
-  (z5mul : Z5 → Z5 → Z5)
-  #check field Z5
+
+inductive Z5 : Type
+| zero 
+| one
+| two 
+| three 
+| four 
+
+
+open Z5 
+
+def z5add : Z5 → Z5 → Z5
+| zero x := x 
+| x zero := x 
+| one one := two 
+| one two := three
+| one three := four 
+| one four := zero 
+| two one := three 
+| two two := four 
+| two three := zero  
+| two four := one  
+| three one := four 
+| three two := zero 
+| three three := one 
+| three four := two 
+| four one := zero 
+| four two := one 
+| four three := two 
+| four four := three
+
+
+def z5mul : Z5 → Z5 → Z5
+| zero x := zero  
+| x zero := zero  
+| one x := x  
+| x one := x 
+| two two := four 
+| two three := one  
+| two four := three  
+| three two := one 
+| three three := four 
+| three four := two 
+| four two := three 
+| four three := two  
+| four four := one 
+
+
+def z5neg : Z5 → Z5 
+| zero := zero 
+| one :=  four 
+| two := three 
+| three := two 
+| four := one
+
+def z5inv : Z5 → Z5 
+| zero := zero 
+| one :=  one 
+| two := three 
+| three := two 
+| four := four  
+
+def z5sub : Z5 → Z5 → Z5 
+| zero x := z5neg x  
+| x zero := x 
+| one one := zero 
+| one two := four
+| one three := three
+| one four := two  
+| two one := one  
+| two two := zero  
+| two three := four  
+| two four := three  
+| three one := two  
+| three two := one  
+| three three := zero  
+| three four := four  
+| four one := three  
+| four two := two  
+| four three := one  
+| four four := zero  
+
+-- axioms 
+--   -- (Z5 : Type) 
+--   -- (z5add : Z5 → Z5 → Z5)
+--   (z5mul : Z5 → Z5 → Z5)
+
+
+-- instance has_zero_Z5 : has_zero Z5 := ⟨ zero ⟩
+-- instance has_one_Z5 : has_one Z5 := ⟨ one ⟩ 
+
+-- instance has_add_Z5 : has_add Z5 := ⟨ z5add ⟩
+-- instance has_mul_Z5 : has_mul Z5 := ⟨ z5mul ⟩  
+
+-- instance semigroup_Z5 : semigroup Z5 := ⟨ z5mul, sorry ⟩
+-- instance add_semigroup_Z5 : add_semigroup Z5 := ⟨ z5add, sorry ⟩
+
+-- instance monoid_Z5 : monoid Z5 := ⟨ z5mul, sorry, one, sorry, sorry ⟩
+-- instance add_monoid_Z5 : add_monoid Z5 := ⟨ z5add, sorry, zero, sorry, sorry ⟩
+
+
+
+-- instance distrib_Z5 : distrib Z5 := ⟨ z5mul, z5add, sorry, sorry ⟩
+
+-- instance sub_neg_monoid_Z5 : sub_neg_monoid Z5 := ⟨ z5add, sorry, zero, sorry, sorry, z5neg, z5sub, sorry ⟩ 
+-- instance add_group_Z5 : add_group Z5 := ⟨ z5add, sorry, zero, sorry, sorry, z5neg, z5sub, sorry, sorry ⟩
+
+
+-- instance add_comm_semigroup_Z5 : add_comm_semigroup Z5 := ⟨ z5add, sorry, sorry ⟩
+-- instance comm_semigroup_Z5 : comm_semigroup Z5 := ⟨ z5mul, sorry, sorry ⟩
+
+-- instance add_comm_monoid_Z5 : add_comm_monoid Z5 := ⟨ z5add, sorry, zero, sorry, sorry, sorry ⟩  
+
+-- instance add_comm_group_Z5 : add_comm_group Z5 := ⟨ z5add, sorry, zero, sorry, sorry, z5neg, z5sub, sorry, sorry, sorry ⟩   
+
+
+-- instance ring_Z5 : ring Z5 := ⟨ z5add, sorry, zero, sorry, sorry, z5neg, z5sub, sorry, sorry, sorry, z5mul, sorry, one, sorry, sorry, sorry, sorry ⟩ 
+
+-- instance comm_ring_Z5 : comm_ring Z5 := ⟨ z5add, sorry, zero, sorry, sorry, z5neg, z5sub, sorry, sorry, sorry, z5mul, sorry, one, sorry, sorry, sorry, sorry, sorry⟩
+
+
+instance field_Z5 : field Z5 := ⟨ z5add, sorry, zero, sorry, sorry, z5neg, z5sub, sorry, sorry, sorry, z5mul, sorry, one, sorry, sorry, sorry, sorry, sorry, z5inv, sorry, sorry, sorry ⟩
+
+#check field Z5
+
+
+
+ 
 
 -- HERE
+
+
 
 /-
 B. [15 points]
@@ -228,6 +456,43 @@ that it's working correctly.
 -/
 
 -- HERE
+
+abbreviation z5scalr := Z5
+abbreviation z5vectr := Z5 × Z5 
+
+instance inhabited_Z5 : inhabited Z5 := ⟨ zero ⟩  
+
+def v5 : z5vectr := ⟨ one, three ⟩ 
+def v6 : z5vectr := ⟨ four, two ⟩
+def v7 : z5vectr := ⟨ zero, two ⟩
+def v8 : z5vectr := ⟨ one, one ⟩   
+
+def s0 : z5scalr := zero 
+def s1 : z5scalr := one 
+def s2 : z5scalr := two 
+def s3 : z5scalr := three
+
+def v9 : z5vectr := s2 • v6 + v7 
+
+def v10 : z5vectr := s2 • v7 + s3 • v8
+
+
+/-
+v9 = s2 • v6 + v7 
+   = two • (four, two) + (zero, two)
+   = (three, four) + (zero, two)
+   = (three, one)
+
+v10 = s2 • v7 + s3 • v8
+    = two • (zero, two) + three • (one, one)
+    = (zero, four) + (three, three)
+    = (three, two)   
+
+-/
+
+
+#reduce v9 -- (three, one)
+#reduce v10 -- (three, two)
 
 /-
 Take away: Instantiating a typeclass
@@ -262,3 +527,6 @@ of both code and proofs. If it has to
 be right (which is the case for much
 crypto code), maybe write it like so!
 -/
+
+end lin2k 
+
