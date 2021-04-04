@@ -324,6 +324,8 @@ repeat {apply n_succ_m_succ_equal _}, -- applying successor constructor 499 time
   apply zeros_equal -- handling 'base case' 
 end
 
+#reduce eq_500_500
+
 
 /-
 7. Typeclasses and instances are used in Lean
