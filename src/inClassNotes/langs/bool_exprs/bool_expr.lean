@@ -24,13 +24,12 @@ notation e1 && e2 := and_expr e1 e2
 def e3' := [tt] && [ff]
 def e4' := e3 && [tt]
 
--- That's syntax
+-- That's the syntax
 
--- Semantics
+-- Now for the semantics
 
 def bool_eval : bool_expr → bool
-| (lit_expr tt) := tt
-| (lit_expr ff) := ff
+| (lit_expr b) := b
 | (and_expr e1 e2) := band (bool_eval e1) (bool_eval e2)
 
 #eval bool_eval e4'
