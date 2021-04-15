@@ -97,7 +97,7 @@ arrow) end of one vector at the head
 of the other then drawing the vector
 from the tail of the first to the head
 of the second. Draw the vectors that
-illustrate the sum, v1 + (-1:K) • v2,
+illustrate the sum, 2 • v1 + (-1:K) • v2,
 and then the sum of that with v3. You
 should come out with the same answer
 as before. Take a picture of your
@@ -272,7 +272,7 @@ and in cryptography in computer science.
 A. [20 points]
 
 Instantiate the field typeclass for
-the integers mod 5 (a prime). You 
+fs (a prime). You 
 may and should stub out the proofs 
 all along the way using "sorry", but
 before you do that, convince yourself
@@ -454,6 +454,18 @@ out the right answer by hand and
 test your code to gain confidence 
 that it's working correctly.
 -/
+
+inductive foo : Type
+| bar
+
+open foo 
+
+def add_foo : foo → foo → foo
+| foo.bar foo.bar := foo.bar
+
+instance has_add_foo : has_add foo := ⟨ add_foo ⟩ 
+
+#reduce (bar, bar) + (bar, bar)
 
 -- HERE
 
