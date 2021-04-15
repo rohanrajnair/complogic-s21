@@ -43,10 +43,15 @@ def bool_eval : bool_expr → bool
 #eval bool_eval e6    -- ff
 
 
-theorem and_expr_symm : ∀ (e1 e2 : bool_expr), bool_eval (and_expr e1 e2) → bool_eval (and_expr e2 e1) := 
+theorem and_expr_symm : ∀ (e1 e2 : bool_expr), bool_eval (and_expr e1 e2) = bool_eval (and_expr e2 e1) := 
 begin
   assume e1 e2,
   simp [bool_eval],
-  assume h,
-  simp [h],
+  cases bool_eval e1,
+  cases bool_eval e2,
+  apply rfl,
+  apply rfl,
+  cases bool_eval e2,
+  apply rfl,
+  apply rfl,
 end 
