@@ -13,17 +13,17 @@ light of these changes in the software about which it proves
 that property. Hint: Be sure to add a state argument everywhere
 one is needed. Here's the original proof. Just fix it here.
 -/
-example : ∀ (e1 e2 : bool_expr), 
-  bool_eval (e1 ∧ e2) = bool_eval (e2 ∧ e1) 
-  :=
+
+example : ∀ (e1 e2 : bool_expr) (st : bool_var → bool), 
+  bool_eval (e1 ∧ e2) st = bool_eval (e2 ∧ e1) st :=
 begin
-  assume e1 e2,
+  assume e1 e2 st,
   simp [bool_eval],
-  cases (bool_eval e1),
-  cases (bool_eval e2),
+  cases (bool_eval e1 st),
+  cases (bool_eval e2 st),
   apply rfl,
   apply rfl,
-  cases (bool_eval e2),
+  cases (bool_eval e2 st),
   repeat {apply rfl},
 end
 
@@ -51,10 +51,31 @@ experience using verification tools and methods, you'll
 find that they really do find bugs in code!
 -/
 
+
+/-
+
+P => Q : can't have P w/o Q, i.e ¬P ∧ (¬Q))
+simplifies to ¬P ∨ Q  
+
+
+P   Q   P => Q    ¬P ∨ Q 
+tt  tt    tt        tt 
+tt  ff    ff        ff
+ff  tt    ff        tt 
+ff  ff    tt        tt 
+
+-/
+
 example : ∀ (e1 e2 : bool_expr) (st: bool_var → bool), 
   bool_eval (¬e1 ∨ e2) st = bool_eval (e1 => e2) st  := 
 begin
-  -- your answer
+  assume e1 e2 st,
+  simp [bool_eval],
+  cases (bool_eval e1 st),
+  apply rfl, 
+  cases (bool_eval e2 st),
+  apply rfl,  
+  apply rfl,  
 end
 
 
@@ -107,12 +128,33 @@ what we want expressions in our language to mean.
 | var_sem (v : bool_var) (e : bool_expr) (st : bool_var → bool) : bool_sem st [v] (st v)
 
 /-
-Finally, if e1 and e2 are expressions, st is a state, b1 and b2 are
+If e1 and e2 are expressions, st is a state, b1 and b2 are
 bools, and the meaning of e1 in st is b1, and the meaning of e2 in st
 is b2, then the meaning of (e1 ∧ e2) in st is the Boolean, b1 && b2.
 -/
 | and_sem : ∀ (e1 e2 : bool_expr) (st : bool_var → bool) (b1 b2 : bool), 
       bool_sem st e1 b1  → bool_sem st e2 b2 → bool_sem st (e1 ∧ e2) (b1 && b2)
+
+/-
+If e1 and e2 are expressions, st is state, b1 and b2 are bools, and meaning of e1 in st is b1,
+meaning of e2 in st is b2, then meaning of e1 ∧ e2 in st is b1 && b2 
+-/
+| or_sem : ∀ (e1 e2 : bool_expr) (st : bool_var → bool) (b1 b2 : bool),
+      bool_sem st e1 b1 → bool_sem st e2 b2 → bool_sem st (e1 ∨ e2) (b1 || b2)
+
+/-
+If e1 is an expression, st is a state, b1 is a bool, and if meaning of e1 in st is b1,
+then meaning of ¬e1 in st is !b1 
+-/
+| not_sem : ∀ (e1 : bool_expr) (st : bool_var → bool) (b1 : bool),
+      bool_sem st e1 b1 → bool_sem st (¬e1) (¬b1)
+
+/-
+If meaning of e1 in st is b1 and meaning of e2 in st is b2, 
+then (e1 => e2) in st is !b1 || b2 (simplified via deMorgan's law)
+-/
+| impl_sem : ∀ (e1 e2 : bool_expr) (st : bool_var → bool) (b1 b2 : bool), 
+      bool_sem st e1 b1 → bool_sem st e2 b2 → bool_sem st (e1 => e2) (!b1 || b2)  
 
 /- 3A:
 
@@ -175,16 +217,28 @@ you both the proposition to be proved and the first few
 
 example : ∀ (e1 e2 : bool_expr) (st : bool_var → bool) (b : bool), 
   bool_sem st (e1 ∧ e2) b ↔ bool_sem st (e2 ∧ e1) b :=
-begin
-  intros,
+begin 
+  intros, 
   split,
 
-  -- forward direction
+  -- forward direction 
   assume h,
-
-
-  -- reverse direction
-
+  cases h,
+  rw bool.band_comm,
+  apply bool_sem.and_sem e2, 
+  cases h_b1,
+  cases h_b2,
+  repeat {exact h_ᾰ_1},
+  exact h_ᾰ,
+  -- reverse direction 
+  assume h,
+  cases h,
+  rw bool.band_comm,
+  apply bool_sem.and_sem e1,
+  cases h_b1,
+  cases h_b2,
+  repeat {exact h_ᾰ_1},
+  exact h_ᾰ,
 end
 
 /- 4. [20 points]
@@ -197,3 +251,86 @@ in any state.
 -/
 
 -- HERE
+
+
+inductive avar : Type 
+| mk (n : nat)
+
+def a_state := avar → nat 
+
+-- Abstract syntax 
+inductive aexp : Type 
+| lit_expr : nat → aexp 
+| var_expr : avar → aexp 
+| add_expr : aexp → aexp → aexp  
+| mul_expr : aexp → aexp → aexp 
+
+
+open aexp 
+ 
+def aeval : aexp → a_state → nat 
+| (lit_expr n) st := n
+| (var_expr v) st := st v 
+| (add_expr e1 e2) st := (aeval e1 st) + (aeval e2 st)
+| (mul_expr e1 e2) st := (aeval e1 st) * (aeval e2 st)
+
+notation e1 + e2 := add_expr e1 e2
+notation e1 * e2 := mul_expr e1 e2
+
+def st0 := λ(v : avar), 0
+example : aeval (aexp.lit_expr 3 + aexp.lit_expr 5) st0 = 8 := rfl  
+
+-- Semantics 
+inductive asem : a_state → aexp → nat → Prop
+| lit_sem (n : nat) (e : aexp) (st : a_state) : asem st (lit_expr n) n
+| var_sem (v : avar) (e :aexp) (st : a_state) : asem st (var_expr v) (st v)
+| add_sem : ∀ (e1 e2 : aexp) (st : a_state) (n1 n2 : nat), 
+  asem st e1 n1 → asem st e2 n2 → asem st (e1 + e2) (n1 + n2)
+| mul_sem : ∀ (e1 e2 : aexp) (st : a_state) (n1 n2 : nat), 
+  asem st e1 n1 → asem st e2 n2 → asem st (e1 * e2) (n1 * n2)
+
+
+theorem add_commutes' : ∀ (e1 e2 : aexp) (st : a_state), 
+  aeval (e1 + e2) st = aeval (e2 + e1) st :=
+begin
+  assume e1 e2 st,
+  simp [aeval],
+  cases (aeval e1 st),
+  cases (aeval e2 st), 
+  apply rfl,
+  cases (aeval e2 st),
+  repeat {rw nat.add_comm},
+end 
+
+lemma add_comm' : ∀ n m : ℕ, nat.add n m = nat.add m n :=
+begin
+  sorry, 
+end
+
+open asem 
+
+theorem add_commutes : ∀ (e1 e2 : aexp) (st : a_state) (n: nat), 
+  asem st (e1 + e2) n ↔ asem st (e2 + e1) n :=  
+begin
+  intros,
+  split,
+  -- forward direction 
+  assume h,
+  cases h,
+  rw add_comm',
+  apply add_sem e2,
+  cases h_n1,
+  cases h_n2,
+  repeat {exact h_ᾰ_1},
+  exact h_ᾰ,
+  -- reverse direction 
+  assume h,
+  cases h,
+  rw add_comm',
+  apply add_sem e1,
+  cases h_n1,
+  cases h_n2, 
+  repeat {exact h_ᾰ_1},
+  exact h_ᾰ,
+end 
+  
