@@ -99,7 +99,9 @@ arithmetic expression.
 
 We implement sequential composition of c1 and c2 by 
 evaluating c2 in the state obtained by evaluating
-c1 in the given (initial) state.
+c1 in the given (initial) state. Note that c1 and
+c2 can each themselves be complex programs (in our
+little language).
 -/
 
 
