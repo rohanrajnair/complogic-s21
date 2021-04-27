@@ -1,4 +1,5 @@
 import .arith_expr
+import .bool_expr
 
 /-
 A little PL in which we have mutable
@@ -121,4 +122,83 @@ def res := c_eval init program
 
 
 
+ /-
+Sadly we'll be unable to sustain the
+use of a computational definition of 
+the semantics of our growing language, 
+because termination is not decidable,
+and thus is not provable for all the
+programs we'll be able to write in the
+complete language.
+-/
+
+/-
+So we're going to have to fall back
+on logical rather than computational
+specification: on the representation
+of a relation as a predicate in Lean.
+
+So instead of 
+
+c_eval : a_state → cmd → a_state
+
+We'll have 
+
+c_sem : a_state → cmd → a_state → Prop.
+
+The proof construction axioms for this
+predicate must prove (c_sem pre c post)
+if and only if "running" the command, c,
+in the state, pre, yields state, post.
+
+For example, running "program" as we've
+defined it above, in the initial state of
+all zero-valued variables, yields a post
+state in which X=10; etc.
+
+So, before our language gets very complex,
+indeed in our language only of assignment
+and sequential composition, let's specify
+its semantics logically.
+ -/
+
+ inductive c_sem : cmd → a_state → a_state → Prop 
  
+ /-
+ Here's a rule for assignment. The rule can be
+ formulated in different ways. Part of the task
+ of learning proof engineering is to learn what
+ formulations work best for downstream proofs.
+ We'll find out with this one.
+ -/
+
+| c_sem_assn : 
+  ∀ {pre post : a_state} (v : avar) (e :aexp), 
+    (override pre v e = post) → 
+    c_sem (assn v e) pre post
+
+
+/-
+The semantics of the command c1;c2 is that if
+running c1 in pre state yields an intermediate
+state, is, and if running c2 in the state, is,
+yields the state, post, then running (c1;c2) in
+the pre state yields the post state. 
+-/
+
+| c_sem_seq : 
+  ∀ {pre is post : a_state} (c1 c2 : cmd),
+      c_sem c1 pre is → 
+      c_sem c2 is post → 
+      c_sem (c1;c2) pre post
+
+
+theorem foo : ∀ st, c_sem program init st → st X = 10 := 
+begin
+  intros,
+  unfold program at ᾰ,
+  cases ᾰ,
+  cases ᾰ_ᾰ_1,
+  rw <- ᾰ_ᾰ_1_ᾰ,
+  apply rfl,
+end
