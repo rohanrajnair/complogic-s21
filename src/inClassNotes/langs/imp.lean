@@ -162,6 +162,8 @@ and sequential composition, let's specify
 its semantics logically.
  -/
 
+ def b_state := bool → bool_var
+
  inductive c_sem : cmd → a_state → a_state → Prop 
  
  /-
