@@ -75,8 +75,11 @@ def st''' := override st'' Z [9]
 
 
 inductive cmd : Type
+| skip 
 | assn (v : avar) (e : aexp) 
 | seq (c1 c2 : cmd) : cmd
+-- | cond (b : bool_expr) (c1 c2 : cmd) : cmd
+-- | while (b : bool_expr) (c : cmd) : cmd
 
 open cmd
 
@@ -84,14 +87,25 @@ notation v = a := assn v a
 notation c1 ; c2  := seq c1 c2 
 
 
-def a1 := X = [7]
+def a1 : cmd := X = [7]
 def a2 := Y = [8]
 def a3 := Z = [9]
 def a4 := X = [10]
 
-def c_eval : a_state → cmd → a_state
-| st (assn v e) := override st v e
-| st (seq c1 c2) := c_eval (c_eval st c1) c2 
+def program : cmd := -- a1; a2; a3; a4
+  X = [7];
+  Y = [8];
+  Z = [9];
+  X = [10];
+  skip
+
+
+
+def c_eval : cmd → a_state → a_state
+| skip st := st
+| (v = e) st  := override st v e
+| (c1 ; c2)st  := c_eval c2 (c_eval c1 st) 
+
 /-
 We implement assignment using function override,
 converting a given (initial) state into a new state
@@ -106,13 +120,7 @@ little language).
 -/
 
 
-def program :=
-  X = [7];
-  Y = [8];
-  Z = [9];
-  X = [10]
-
-def res := c_eval init program
+def res := c_eval program init
 
 #reduce res X
 #reduce res Y
@@ -121,86 +129,71 @@ def res := c_eval init program
 -- Yay!
 
 
+inductive c_sem : cmd → a_state → a_state → Prop
+| c_sem_skip : ∀ (st : a_state), 
+    c_sem skip st st
 
- /-
-Sadly we'll be unable to sustain the
-use of a computational definition of 
-the semantics of our growing language, 
-because termination is not decidable,
-and thus is not provable for all the
-programs we'll be able to write in the
-complete language.
--/
-
-/-
-So we're going to have to fall back
-on logical rather than computational
-specification: on the representation
-of a relation as a predicate in Lean.
-
-So instead of 
-
-c_eval : a_state → cmd → a_state
-
-We'll have 
-
-c_sem : a_state → cmd → a_state → Prop.
-
-The proof construction axioms for this
-predicate must prove (c_sem pre c post)
-if and only if "running" the command, c,
-in the state, pre, yields state, post.
-
-For example, running "program" as we've
-defined it above, in the initial state of
-all zero-valued variables, yields a post
-state in which X=10; etc.
-
-So, before our language gets very complex,
-indeed in our language only of assignment
-and sequential composition, let's specify
-its semantics logically.
- -/
-
- def b_state := bool → bool_var
-
- inductive c_sem : cmd → a_state → a_state → Prop 
- 
- /-
- Here's a rule for assignment. The rule can be
- formulated in different ways. Part of the task
- of learning proof engineering is to learn what
- formulations work best for downstream proofs.
- We'll find out with this one.
- -/
-
-| c_sem_assn : 
-  ∀ {pre post : a_state} (v : avar) (e :aexp), 
+| c_sem_assm :
+  ∀ (pre post : a_state) (v : avar) (e : aexp),
     (override pre v e = post) → 
-    c_sem (assn v e) pre post
+    c_sem (v = e) pre post
+
+| c_sem_seq :
+  ∀ (pre is post : a_state) (c1 c2 : cmd),
+  c_sem c1 pre is → 
+  c_sem c2 is post →
+  c_sem (c1 ; c2) pre post
+
+  /-
+  {pre}
+  (c1
+  {is}
+  c2) 
+  {post}
+  -/
 
 
-/-
-The semantics of the command c1;c2 is that if
-running c1 in pre state yields an intermediate
-state, is, and if running c2 in the state, is,
-yields the state, post, then running (c1;c2) in
-the pre state yields the post state. 
--/
+-- proof broken because we added skip at end of "program"
+  theorem t1 : 
+    ∀ (post : a_state), c_sem program init post → post X = 10 := 
+  begin
+    assume post,
+    assume h,
+    unfold program at h,
+    cases h,
+    cases h_ᾰ_1,
+    rw <- h_ᾰ_1_ᾰ,
+    apply rfl,
+  end
 
-| c_sem_seq : 
-  ∀ {pre is post : a_state} (c1 c2 : cmd),
-      c_sem c1 pre is → 
-      c_sem c2 is post → 
-      c_sem (c1;c2) pre post
+-- here we fix it
+  theorem t2 : 
+    ∀ (post : a_state), c_sem program init post → post X = 10 := 
+  begin
+    assume post,
+    assume h,
+    unfold program at h,
+    cases h,
+    cases h_ᾰ_1,
+    cases h_ᾰ,
+    cases h_ᾰ_ᾰ_1,
+    rw <- h_ᾰ_ᾰ_1_ᾰ,
+    apply rfl,
+  end
 
-
-theorem foo : ∀ st, c_sem program init st → st X = 10 := 
-begin
-  intros,
-  unfold program at ᾰ,
-  cases ᾰ,
-  cases ᾰ_ᾰ_1,
-  rw <- ᾰ_ᾰ_1_ᾰ,
-  apply rfl,
-end
+-- program broken because we added skip at end of "program"
+-- homework: you fix it
+  example : 
+    ∀ (post : a_state), c_sem program init post → post Z = 9 := 
+  begin
+    assume post,
+    assume h,
+    unfold program at h,
+    cases h,
+    cases h_ᾰ,
+    cases h_ᾰ_ᾰ_1,
+    cases h_ᾰ_1,
+    rw <- h_ᾰ_1_ᾰ,
+    rw <- h_ᾰ_ᾰ_1_ᾰ,
+    apply rfl,
+  end
