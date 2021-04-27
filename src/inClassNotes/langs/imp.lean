@@ -190,10 +190,5 @@ inductive c_sem : cmd → a_state → a_state → Prop
     assume h,
     unfold program at h,
     cases h,
-    cases h_ᾰ,
-    cases h_ᾰ_ᾰ_1,
-    cases h_ᾰ_1,
-    rw <- h_ᾰ_1_ᾰ,
-    rw <- h_ᾰ_ᾰ_1_ᾰ,
-    apply rfl,
+  _
   end
