@@ -1,4 +1,5 @@
 import .arith_expr
+import .bool_expr
 
 /-
 A little PL in which we have mutable
@@ -74,8 +75,11 @@ def st''' := override st'' Z [9]
 
 
 inductive cmd : Type
+| skip 
 | assn (v : avar) (e : aexp) 
 | seq (c1 c2 : cmd) : cmd
+-- | cond (b : bool_expr) (c1 c2 : cmd) : cmd
+-- | while (b : bool_expr) (c : cmd) : cmd
 
 open cmd
 
@@ -83,14 +87,25 @@ notation v = a := assn v a
 notation c1 ; c2  := seq c1 c2 
 
 
-def a1 := X = [7]
+def a1 : cmd := X = [7]
 def a2 := Y = [8]
 def a3 := Z = [9]
 def a4 := X = [10]
 
-def c_eval : a_state → cmd → a_state
-| st (assn v e) := override st v e
-| st (seq c1 c2) := c_eval (c_eval st c1) c2 
+def program : cmd := -- a1; a2; a3; a4
+  X = [7];
+  Y = [8];
+  Z = [9];
+  X = [10];
+  skip
+
+
+
+def c_eval : cmd → a_state → a_state
+| skip st := st
+| (v = e) st  := override st v e
+| (c1 ; c2)st  := c_eval c2 (c_eval c1 st) 
+
 /-
 We implement assignment using function override,
 converting a given (initial) state into a new state
@@ -105,13 +120,7 @@ little language).
 -/
 
 
-def program :=
-  X = [7];
-  Y = [8];
-  Z = [9];
-  X = [10]
-
-def res := c_eval init program
+def res := c_eval program init
 
 #reduce res X
 #reduce res Y
@@ -120,5 +129,71 @@ def res := c_eval init program
 -- Yay!
 
 
+inductive c_sem : cmd → a_state → a_state → Prop
+| c_sem_skip : ∀ (st : a_state), 
+    c_sem skip st st
 
- 
+| c_sem_assm :
+  ∀ (pre post : a_state) (v : avar) (e : aexp),
+    (override pre v e = post) → 
+    c_sem (v = e) pre post
+
+| c_sem_seq :
+  ∀ (pre is post : a_state) (c1 c2 : cmd),
+  c_sem c1 pre is → 
+  c_sem c2 is post →
+  c_sem (c1 ; c2) pre post
+
+  /-
+  {pre}
+  (c1
+  {is}
+  c2) 
+  {post}
+  -/
+
+
+-- proof broken because we added skip at end of "program"
+  theorem t1 : 
+    ∀ (post : a_state), c_sem program init post → post X = 10 := 
+  begin
+    assume post,
+    assume h,
+    unfold program at h,
+    cases h,
+    cases h_ᾰ_1,
+    rw <- h_ᾰ_1_ᾰ,
+    apply rfl,
+  end
+
+-- here we fix it
+  theorem t2 : 
+    ∀ (post : a_state), c_sem program init post → post X = 10 := 
+  begin
+    assume post,
+    assume h,
+    unfold program at h,
+    cases h,
+    cases h_ᾰ_1,
+    cases h_ᾰ,
+    cases h_ᾰ_ᾰ_1,
+    rw <- h_ᾰ_ᾰ_1_ᾰ,
+    apply rfl,
+  end
+
+-- program broken because we added skip at end of "program"
+-- homework: you fix it
+  example : 
+    ∀ (post : a_state), c_sem program init post → post Z = 9 := 
+  begin
+    assume post,
+    assume h,
+    unfold program at h,
+    cases h,
+    cases h_ᾰ,
+    cases h_ᾰ_ᾰ_1,
+    cases h_ᾰ_1,
+    rw <- h_ᾰ_1_ᾰ,
+    rw <- h_ᾰ_ᾰ_1_ᾰ,
+    apply rfl,
+  end
