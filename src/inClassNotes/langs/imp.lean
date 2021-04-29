@@ -287,7 +287,8 @@ end
 
 example : any { prog2 } (λ st' : a_state, st' X = 10 ∨ st' Y = 9) :=
 begin
-show satisfies prog2 any (λ st : a_state, st X = 10 ∨ st Y = 9),
+unfold satisfies, 
+-- COMPLETE THIS PROOF
 end
 
 
