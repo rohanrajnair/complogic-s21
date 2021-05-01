@@ -99,12 +99,10 @@ def program : cmd := -- a1; a2; a3; a4
   X = [10];
   skip
 
-
-
 def c_eval : cmd → a_state → a_state
 | skip st := st
 | (v = e) st  := override st v e
-| (c1 ; c2)st  := c_eval c2 (c_eval c1 st) 
+| (c1 ; c2) st  := c_eval c2 (c_eval c1 st) 
 
 /-
 We implement assignment using function override,
@@ -192,3 +190,174 @@ inductive c_sem : cmd → a_state → a_state → Prop
     cases h,
   _
   end
+
+
+/-
+BEHAVIORAL SPECIFICATION
+-/
+
+
+/-
+In our model, the meaning of a program
+is given by a relation associating states
+before program execution with states after.
+We represent this relation using the c_sem
+family of propositions. In particular, the
+proposition, c_sem cmd pre post, will
+have a proof if and only if running cmd in
+the state, pre, leaves the memory in the
+state, post.
+
+
+We now generalize this notion, yielding 
+the concept of a declarative (logical) 
+specification of the behavior of an 
+imperative program.
+
+What we want to say is the following:
+For a program, C, if the state of the
+memory is correctly set up for C to 
+run then the state of the memory after
+C runs will contain the information we
+want.
+
+The idea is that we'll encode the 
+necessary inputs and starting conditions
+in the state and we then expect that 
+running the program in that state will
+produce a state that satisfies our 
+needs.
+
+We are thus concerned with *properties*
+of states. We want to say that if the
+state before a program runs satisfies 
+a certain "pre-condition", then if
+we run the program in such a state, the
+memory will be left in a state that
+satisfies a desired "post-condition."
+
+A pre-condition or a post-condition in
+this sense is a predicate on the state
+of the memory, and is thus of the type
+a_state -> Prop. We will call such a
+condition an "assertion."
+-/
+
+def Assertion := a_state → Prop
+
+/-
+Here are some examples.
+-/
+
+
+def pre1 : Assertion := λ st, true
+def post1 : Assertion := λ st, st X = 10 
+
+/-
+Any state satisfies pre1.
+-/
+
+lemma pre1_trivial : ∀ st : a_state, pre1 st :=
+begin
+  intro st,
+  unfold pre1,
+end
+
+/-
+Multiple states satisfy post1.
+
+{ (X,10), (Y,0), (Z, 0) }
+{ (X,10), (Y,1), (Z, 2) }
+{ (X,10), (Y,20), (Z, 100) }
+{ (X,0), (Y,9), (Z, 100) }
+etc.
+-/
+
+/-
+Let's draw some set diagrams
+showing subsets of states that
+satisfy various assertions.
+-/
+
+/-
+We now formulate specifications
+of program as pairs of assertions: 
+pre-condition/post-condition pairs!
+Given a program C and assertions 
+pre and post, we can formulate
+the assertion that if you run C
+in a state satisfying pre then 
+you will end up in a state that
+satisfies post. This is itself a
+proposition that might or might
+not be true given pre, post, 
+and C. We can now formalize what
+it means for a program to satisfy
+a pre-condition/post-condition
+specification!
+-/
+
+def satisfies (c : cmd) (pre post : a_state → Prop) :=
+  ∀ st st' : 
+    a_state, pre st → 
+    c_sem c st st' →  
+    post st'
+
+/-
+Examples
+-/
+
+def p2 : cmd := 
+  X = [10]
+
+def a_pre := λ st : a_state, st X = 10
+
+/-
+def pre1 : Assertion := λ st, true
+def post1 : Assertion := λ st, st X = 10 
+-/
+
+lemma v1 : satisfies p2 pre1 post1 := 
+begin
+  unfold satisfies,
+  intros,
+  cases ᾰ_1,
+  rw <- ᾰ_1_ᾰ,
+  simp [post1],
+  apply rfl,
+end
+
+notation pre {c} post := satisfies c pre post
+
+example : pre1 {p2} post1 := v1
+
+/-
+We have thus arrived at the critical concept
+of a Hoare triple. A Hoare triple is simply 
+a proposition that *asserts* that if you run
+a program c in a state satisfying a speficied
+precondition then the final state will satisfy
+the postcondition. 
+-/
+
+/-
+There are several fundamental ways in which we
+use such triples. One is that we give all three
+elements (pre, c, post), and then prove it! This
+is the task of *verification*. A second is that
+we give pre and post, and now the task is to
+*produce* a progrma C that makes the triple true.
+This is the fundamental task of the practicing
+programmer! Turn specifications into verified
+programs. There are other possibilities. We 
+can for example give C and post and ask what
+is the weakest precondition (most permissive
+condition on the initial state) the sufficies
+to make the triple true?
+
+Note that in general, there are many programs
+that satisfy a given pre/post specification.
+Exercise: produce another program, p3, that
+satisfies the same pre/post specification: 
+i.e., for which pre1 {p3} post1.
+-/
