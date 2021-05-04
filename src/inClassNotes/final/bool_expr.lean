@@ -18,8 +18,8 @@ inductive bool_expr : Type
 | or_expr : bool_expr → bool_expr → bool_expr 
 | impl_expr : bool_expr → bool_expr → bool_expr   
 | not_expr : bool_expr → bool_expr
-| le_expr : arith_expr → arith_expr -> bool_expr  -- Exam
-| eq_expr : arith_expr → arith_expr -> bool_expr  -- Exam
+| le_expr : arith_expr → arith_expr -> bool_expr 
+| eq_expr : arith_expr → arith_expr -> bool_expr 
 
 open bool_expr 
 
@@ -33,8 +33,8 @@ notation `[` b `]` := lit_expr b
 notation `[` v `]` := var_expr v
 reserve infixr `=>`:67              
 notation e1 => e2 := impl_expr e1 e2   
-notation a1 <= a2 := le_expr a1 a2      -- Exam
-notation a1 == a2 := eq_expr a1 a2      -- Exan
+notation a1 <= a2 := le_expr a1 a2      
+notation a1 == a2 := eq_expr a1 a2     
 
 /-
 Semantics
@@ -46,17 +46,17 @@ def bimp : bool → bool → bool
 | _ _ := tt
 
 
-def eql : ℕ → ℕ → bool      -- EXAM
+def eql : ℕ → ℕ → bool   
 | 0 0 := tt
 | 0 _ := ff
 | _ 0 := ff
-|(n'+1)(m'+1):= eq n' m'
+| (n'+1) (m'+1) := eq n' m'
 
 
-def le : ℕ → ℕ → bool       -- EXAM
+def le : ℕ → ℕ → bool 
 | 0 _ := tt
 | _ 0 := ff
-| (n'+1)(m'+1) := le n' m'
+| (n'+1) (m'+1) := le n' m'
 
 
 --def bool_eval : bool_expr → (bool_var → bool) → bool
@@ -67,7 +67,7 @@ def bool_eval : bool_expr → env → bool
 | (or_expr e1 e2) st := bor (bool_eval e1 st) (bool_eval e2 st)
 | (impl_expr e1 e2) st := bimp (bool_eval e1 st) (bool_eval e2 st) 
 | (not_expr e) st := bnot (bool_eval e st)
--- Exam 
+-- New 
 | (le_expr a1 a2) st := le (arith_expr_eval st a1) (arith_expr_eval st a2)
 | (eq_expr a1 a2) st := eql (arith_expr_eval st a1) (arith_expr_eval st a2)
 

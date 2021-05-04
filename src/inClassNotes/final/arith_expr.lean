@@ -17,10 +17,12 @@ def arith_expr_eval : env → arith_expr  → nat
 | st (add_arith_expr e1 e2) := (arith_expr_eval st e1) + (arith_expr_eval st e2)
 | st (mul_arith_expr e1 e2) := (arith_expr_eval st e1) * (arith_expr_eval st e2)
 
+-- coincrete syntax
 notation `[` n `]` := lit_arith_expr n
 notation `[` v `]` := var_arith_expr v
 notation e1 + e2 := add_arith_expr e1 e2
 notation e1 * e2 := mul_arith_expr e1 e2
+
 
 -- Provide initial values/interpretation for variables of type (var nat)
 instance : has_var nat := ⟨ λ (v : var nat), 0 ⟩   
