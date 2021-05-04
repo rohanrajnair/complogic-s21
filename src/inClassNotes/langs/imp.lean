@@ -294,3 +294,11 @@ end
 
 
 
+example : any { prog2 } (λ st' : a_state, st' X = 10 ∨ st' Y = 9) :=
+begin
+  unfold satisfies,   -- remembering the definition of pre{c}post notation, ...
+  assume pre post h_any h_sem,
+  apply or.inr,
+  cases h_sem,
+  rw <- h_sem_ᾰ,
+end

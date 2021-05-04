@@ -17,29 +17,33 @@ inductive cmd : Type
 | b_assn (v : var bool) (e : bool_expr) 
 | seq (c1 c2 : cmd) : cmd
 | ifelse (b : bool_expr) (c1 c2 : cmd)
-
--- | cond (b : bool_expr) (c1 c2 : cmd) : cmd
--- | while (b : bool_expr) (c : cmd) : cmd
+| while (b : bool_expr) (c : cmd)
 
 open cmd
 
 notation v = e := b_assn v e 
 notation v = a := a_assn v a 
 notation c1 ; c2  := seq c1 c2 
-notation `cond ` b ` then ` c1 ` else ` c2 := ifelse b c1 c2
+notation `IF ` b ` THEN ` c1 ` ELSE ` c2 := ifelse b c1 c2
+notation `WHILE ` b ` DO ` c := while b c
 
+/-
+Computation semantics
+-/
 def c_eval : cmd → env → env
 | skip st := st
 | (b_assn v e) st  := override_bool st v e
 | (a_assn v e) st  := override_nat st v e
 | (c1 ; c2) st  := c_eval c2 (c_eval c1 st) 
-
--- new
-| (cond b then c1 else c2) st := 
+| (IF b THEN c1 ELSE c2) st := 
     if (bool_eval b st) 
       then c_eval c1 st
       else c_eval c2 st
+| (WHILE b DO c) st := st   -- WHAT GOES HERE, WHAT GOES WRONG
 
+/-
+Logical semantics 
+-/
 inductive c_sem : cmd → env → env → Prop
 | c_sem_skip : ∀ (st : env), 
     c_sem skip st st
@@ -60,8 +64,6 @@ inductive c_sem : cmd → env → env → Prop
   c_sem c2 is post →
   c_sem (c1 ; c2) pre post
 
-  -- New
-
   | c_sem_if_false : 
     ∀ (pre is post : env) (b : bool_expr) (c1 c2 : cmd),
     bool_eval b pre = ff → 
@@ -70,6 +72,8 @@ inductive c_sem : cmd → env → env → Prop
 
   | c_sem_if_true : 
     ∀ (pre is post : env) (b : bool_expr) (c1 c2 : cmd),
-    bool_eval b pre = ff → 
+    bool_eval b pre = tt → 
     c_sem c1 pre post → 
     c_sem (ifelse b c1 c2) pre post
+
+    -- HOW TO FIX?

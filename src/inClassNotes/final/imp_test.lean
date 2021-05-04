@@ -15,13 +15,22 @@ example : post_env.nat_var_interp X = 10 := rfl
 example : post_env.nat_var_interp Y = 8 := rfl
 example : post_env.nat_var_interp Z = 9 := rfl
 
+open cmd
+
+def p2 : cmd := IF [tt] THEN (program) ELSE (X=[2]) 
+def p3 : cmd := IF [ff] THEN (X=[1]) ELSE (X=[2]) 
+
+example : (c_eval p2 init_env).nat_var_interp X = 10 := rfl
+example : (c_eval p3 init_env).nat_var_interp X = 2 := rfl
 
 /-
 Claim and prove logically that in "program" 
 post state, X = 10.
 -/
   theorem t1 : 
-    ∀ (post : env), c_sem program init_env post → post.nat_var_interp X = 10 := 
+    ∀ (post : env), 
+    c_sem program init_env post → 
+    post.nat_var_interp X = 10 := 
   begin
     assume post,
     assume h,
@@ -51,11 +60,6 @@ post state, X = 10.
 
 
 --
-
-open cmd
-
-def p2 : cmd := ifelse [tt] (X=[1]) (X=[2]) 
-def p3 : cmd := ifelse [ff] (X=[1]) (X=[2]) 
 
 -- computational testing
 example : (c_eval p2 init_env).nat_var_interp X = 1 := rfl
