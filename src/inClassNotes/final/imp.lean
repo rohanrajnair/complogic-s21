@@ -28,7 +28,7 @@ notation `IF ` b ` THEN ` c1 ` ELSE ` c2 := ifelse b c1 c2
 notation `WHILE ` b ` DO ` c := while b c
 
 /-
-Computation semantics
+Computational semantics
 -/
 def c_eval : cmd → env → env
 | skip st := st
