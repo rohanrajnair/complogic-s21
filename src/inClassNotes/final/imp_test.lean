@@ -1,5 +1,19 @@
+import .assertion
 import .imp
 import .var_test
+
+/-
+Tests after completion of cmd syntax including if and while
+-/
+
+def p1 : cmd :=
+IF (bool_expr.eq_expr [X] [0]) -- provide concrete syntax
+THEN X = [1]
+ELSE X = [2]
+
+/-
+Tests before completion of cmd syntax including if and while
+-/
 
 
 -- a little program: X gets overwritten
@@ -59,11 +73,9 @@ post state, X = 10.
   end
 
 
---
-
 -- computational testing
-example : (c_eval p2 init_env).nat_var_interp X = 1 := rfl
-example : (c_eval p3 init_env).nat_var_interp X = 2 := rfl
+example : (c_eval p2 init_env).nat_var_interp X = 1 := rfl  -- no
+example : (c_eval p3 init_env).nat_var_interp X = 2 := rfl  -- yes
 
 -- logical verification
 

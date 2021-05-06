@@ -25,7 +25,7 @@ notation v = e := b_assn v e
 notation v = a := a_assn v a 
 notation c1 ; c2  := seq c1 c2 
 notation `IF ` b ` THEN ` c1 ` ELSE ` c2 := ifelse b c1 c2
-notation `WHILE ` b ` DO ` c := while b c
+notation `WHILE ` b ` DO ` c ` END`:= while b c
 
 /-
 Computational semantics
@@ -39,41 +39,80 @@ def c_eval : cmd → env → env
     if (bool_eval b st) 
       then c_eval c1 st
       else c_eval c2 st
-| (WHILE b DO c) st := st   -- WHAT GOES HERE, WHAT GOES WRONG
+| (WHILE b DO c END) st := 
+    if (bool_eval b st) 
+      then c_eval (c; WHILE b DO c END) st
+      else st
+/-
+      -- run c; repeat loop. 
+      -- Unroll loop by one run of c
+      -- Running c can but needn't make b false
+      -- side effects via big shared memory (BSM)
+-/
+
 
 /-
-Logical semantics 
+Logical semantics
+
+The rules are the axioms you can then
+use to prove c_sem relations.
 -/
 inductive c_sem : cmd → env → env → Prop
+
+-- c_sem skip pre pre
 | c_sem_skip : ∀ (st : env), 
     c_sem skip st st
 
+-- c_sem (v =a e) pre post  -- arith assignment
 | c_sem_arith_assn :
   ∀ (pre post : env) (v : var nat) (e : arith_expr),
     (override_nat pre v e = post) → 
     c_sem (a_assn v e) pre post
 
+-- c_sem (v =b e) pre post  -- bool assignment
 | c_sem_bool_assn :
   ∀ (pre post : env) (v : var bool) (e : bool_expr),
     (override_bool pre v e = post) → 
     c_sem (b_assn v e) pre post
 
+-- c_sem (c1 ; c2) pre post
 | c_sem_seq :
   ∀ (pre is post : env) (c1 c2 : cmd),
   c_sem c1 pre is → 
   c_sem c2 is post →
   c_sem (c1 ; c2) pre post
 
+-- c_sem if false c1 c2
   | c_sem_if_false : 
     ∀ (pre is post : env) (b : bool_expr) (c1 c2 : cmd),
     bool_eval b pre = ff → 
     c_sem c2 pre post → 
-    c_sem (ifelse b c1 c2) pre post
+    c_sem (IF b THEN c1 ELSE c2) pre post
 
+-- c_sem if true c1 c2
   | c_sem_if_true : 
-    ∀ (pre is post : env) (b : bool_expr) (c1 c2 : cmd),
+    ∀ (pre is post : env) 
+      (b : bool_expr) 
+      (c1 c2 : cmd),
     bool_eval b pre = tt → 
     c_sem c1 pre post → 
-    c_sem (ifelse b c1 c2) pre post
+    c_sem (IF b THEN c1 ELSE c2) pre post
+    -- NEW
 
-    -- HOW TO FIX?
+  -- c_sem (while false do c) pre post
+  | c_sem_while_false :
+    ∀ (pre : env) 
+      (b : bool_expr) 
+      (c : cmd),
+    bool_eval b pre = ff → 
+    c_sem (WHILE b DO c END) pre pre
+
+  -- c_sem (while true do c) pre post
+  | c_sem_while_true :
+    ∀ (pre is post : env) 
+      (b : bool_expr) 
+      (c : cmd),
+    bool_eval b pre = tt → 
+    c_sem c pre is → -- one iteration of c: pre->is
+    c_sem (WHILE b DO c END) is post → 
+    c_sem (WHILE b DO c END) pre post
